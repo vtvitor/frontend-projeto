@@ -1,5 +1,5 @@
 const API = (() => {
-  const BASE = "http://localhost:8080/api";
+  const BASE = "https://backend-projeto-tkvz.onrender.com/api";
 
   async function chamar(path, opcoes = {}) {
     try {
