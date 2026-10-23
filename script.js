@@ -2160,30 +2160,60 @@
       }
 
       const session = Auth.getSession();
-      const password = prompt("Para bloquear o cartão, por favor, confirme sua senha:");
 
-      if (password === null) {
-        return false;
-      }
+      // Abre o modal de bloqueio em vez de usar prompt()
+      const modal = $("#blockCardModal");
+      const passwordInput = $("#blockCardPassword");
+      const confirmBtn = $("#confirmBlockBtn");
+      const cancelBtn = $("#cancelBlockBtn");
+      const closeBtn = $("#closeBlockModal");
 
-      if (!password || password.length < 6) {
-        alert("Senha inválida. A senha deve ter no mínimo 6 caracteres.");
-        return false;
-      }
+      if (!modal) return false;
 
-      // Nota: Em um sistema real, a validação da senha seria feita via API no backend.
-      // Aqui, para fins de demonstração no front-end, validamos a senha do usuário logado.
-      const users = Auth.loadUsers();
-      const user = users.find(u => u.id === session?.id || u.email === session?.email);
+      modal.style.display = "flex";
+      passwordInput.value = "";
+      passwordInput.focus();
 
-      if (!user || user.senha !== password) {
-        alert("Senha incorreta. O cartão não foi bloqueado.");
-        return false;
-      }
+      return new Promise((resolve) => {
+        const cleanup = () => {
+          modal.style.display = "none";
+          confirmBtn.removeEventListener("click", handleConfirm);
+          cancelBtn.removeEventListener("click", handleCancel);
+          closeBtn.removeEventListener("click", handleCancel);
+        };
 
-      this.markBlocked(id);
-      return true;
+        const handleCancel = () => {
+          cleanup();
+          resolve(false);
+        };
+
+        const handleConfirm = () => {
+          const password = passwordInput.value;
+
+          if (!password || password.length < 6) {
+            alert("Senha inválida. A senha deve ter no mínimo 6 caracteres.");
+            return;
+          }
+
+          const users = Auth.loadUsers();
+          const user = users.find(u => u.id === session?.id || u.email === session?.email);
+
+          if (!user || user.senha !== password) {
+            alert("Senha incorreta. O cartão não foi bloqueado.");
+            return;
+          }
+
+          this.markBlocked(id);
+          cleanup();
+          resolve(true);
+        };
+
+        confirmBtn.addEventListener("click", handleConfirm);
+        cancelBtn.addEventListener("click", handleCancel);
+        closeBtn.addEventListener("click", handleCancel);
+      });
     },
+
 
     async deletar(id) {
 

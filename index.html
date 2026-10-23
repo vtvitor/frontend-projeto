@@ -73,6 +73,27 @@
     </div>
   </div>
 
+  <!-- Modal de Bloqueio de Cartão -->
+  <div class="modal-overlay" id="blockCardModal" style="display:none">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Bloquear Cartão</h2>
+        <button class="modal-close" id="closeBlockModal">&times;</button>
+      </div>
+      <p class="modal-text">Esta ação é irreversível. Para confirmar o bloqueio, por favor, insira sua senha de acesso.</p>
+      <div class="modal-body">
+        <label>Senha de acesso
+          <input type="password" id="blockCardPassword" placeholder="Sua senha" />
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-soft" id="cancelBlockBtn">Cancelar</button>
+        <button class="btn btn-danger" id="confirmBlockBtn">Confirmar Bloqueio</button>
+      </div>
+    </div>
+  </div>
+
+
   <div class="container">
       <aside class="sidebar" id="mapSidebar">
       <div class="search-box">
