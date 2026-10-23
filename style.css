@@ -129,6 +129,7 @@ header h1 { font-size: 1.3rem; font-weight: 600; }
 .line-chip.active { background: #1e88e5; color: #fff; border-color: #1565c0; }
 
 .info-panel { padding: 14px 16px; flex: 1; }
+.detail-back-button { margin-bottom: 12px; font-size: 0.78rem; padding: 6px 10px; }
 .info-panel h2 { font-size: 1.05rem; color: #1565c0; margin-bottom: 8px; }
 .info-panel .point-name { font-size: 1.2rem; color: #0d47a1; margin-bottom: 4px; font-weight: 600; }
 .info-panel .point-address { font-size: 0.85rem; color: #607d8b; margin-bottom: 12px; }
@@ -146,8 +147,50 @@ header h1 { font-size: 1.3rem; font-weight: 600; }
 .line-tag.direct { background: #e53935; }
 
 .time-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 0.82rem; }
-.time-table th, .time-table td { padding: 5px 7px; text-align: left; border-bottom: 1px solid #eceff1; }
-.time-table th { background: #f5f7fa; color: #455a64; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
+.time-table th, .time-table td { padding: 5px 7px; text-align: left; border-bottom: 1px solid #eceff1; vertical-align: top; }
+.time-table th { background: #f5f7fa; color: #455a64; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; width: 32%; }
+.time-table td { width: 68%; }
+.time-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: flex-start;
+}
+.time-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  padding: 4px 7px;
+  line-height: 1.2;
+  margin: 2px 0;
+}
+.time-badge-past {
+  background: #cfd8dc !important;
+  color: #546e7a !important;
+  border-color: #b0bec5 !important;
+  opacity: 0.8;
+}
+
+.time-badge-near {
+  background: #e8f5e9 !important;
+  color: #1b5e20 !important;
+  border-color: #a5d6a7 !important;
+  font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  .time-table th,
+  .time-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .time-table tr {
+    display: block;
+    margin-bottom: 8px;
+  }
+}
 
 .disclaimer {
   background: #fff8e1; border-left: 3px solid #ffb300;
@@ -176,8 +219,25 @@ header h1 { font-size: 1.3rem; font-weight: 600; }
 }
 .btn-primary { background: #1e88e5; color: #fff; }
 .btn-primary:hover { background: #1565c0; }
+.btn-soft {
+  background: #eaf4ff;
+  color: #1565c0;
+  border: 1px solid #cfe3ff;
+  box-shadow: 0 1px 3px rgba(30, 136, 229, 0.08);
+}
+.btn-soft:hover { background: #dfeeff; }
 .btn-danger { background: #ef5350; color: #fff; padding: 4px 9px; font-size: 0.75rem; }
 .btn-danger:hover { background: #c62828; }
+
+.route-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.route-actions .btn {
+  flex: 1 1 150px;
+}
 
 .form-error { font-size: 0.78rem; color: #c62828; min-height: 1.2em; margin: 0; }
 .empty-msg { font-size: 0.82rem; color: #90a4ae; font-style: italic; text-align: center; padding: 14px 6px; }
@@ -190,6 +250,14 @@ header h1 { font-size: 1.3rem; font-weight: 600; }
   color: #fff; border-radius: 8px;
   padding: 12px;
 }
+.card-item.is-blocked { background: linear-gradient(135deg, #546e7a, #37474f); }
+.card-item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.card-status {
+  background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 999px; padding: 3px 8px; font-size: 0.68rem; font-weight: 700;
+  white-space: nowrap;
+}
+.card-status.blocked { background: #fff3e0; border-color: #ffcc80; color: #e65100; }
 .card-item-name { font-weight: 600; font-size: 0.95rem; }
 .card-item-cpf { font-size: 0.72rem; opacity: 0.85; margin-top: 2px; }
 .card-item-number { font-family: "Courier New", monospace; font-size: 1rem; letter-spacing: 1px; margin: 5px 0 6px; }
@@ -197,6 +265,16 @@ header h1 { font-size: 1.3rem; font-weight: 600; }
 .card-item-balance strong { font-size: 1rem; }
 .card-item-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 6px; }
 .recharge-count { font-size: 0.72rem; opacity: 0.85; }
+.card-action-buttons { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+.btn-warning { background: #ffb300; color: #4e342e; padding: 4px 9px; font-size: 0.75rem; }
+.btn-warning:hover { background: #ff8f00; }
+.btn-warning:disabled { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.8); cursor: not-allowed; }
+.blocked-card-notice {
+  display: flex; flex-direction: column; gap: 4px;
+  background: rgba(255,243,224,0.96); border: 1px solid #ffcc80; border-radius: 6px;
+  color: #5d4037; padding: 9px 10px; margin-top: 8px; font-size: 0.76rem; line-height: 1.4;
+}
+.blocked-card-notice strong { color: #e65100; font-size: 0.8rem; }
 
 .recharge-box {
   background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
@@ -452,7 +530,10 @@ header h1 { font-size: 1.3rem; font-weight: 600; }
   .card-item-balance { font-size: 0.75rem; }
   .card-item-balance strong { font-size: 0.92rem; }
   .card-item-actions { margin-top: 7px; }
+  .card-action-buttons { gap: 4px; }
+  .btn-warning { padding: 3px 7px; font-size: 0.68rem; }
   .btn-danger { padding: 3px 7px; font-size: 0.68rem; }
+  .blocked-card-notice { font-size: 0.7rem; padding: 8px 9px; }
   .recharge-box { padding: 7px 9px; margin-top: 7px; }
   .recharge-title { font-size: 0.7rem; margin-bottom: 5px; }
   .recharge-row { flex-wrap: wrap; gap: 4px; }

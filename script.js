@@ -13,6 +13,7 @@
     routeGeometryCache: new Map(),
     routeSegmentCache: new Map(),
     customRouteActive: false,
+    scheduleRefreshTimer: null,
 
     initialized: {
       search: false,
@@ -42,7 +43,237 @@
     return String(str ?? "")
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function expandNormalizedText(value) {
+    const text = normalizeString(value || "");
+    if (!text) return [];
+
+    const tokens = text.split(/\s+/).map(token => {
+      const replacements = {
+        jd: "jardim",
+        av: "avenida",
+        rua: "rua",
+        r: "rua",
+        praca: "praca",
+        vl: "vila",
+      };
+
+      return replacements[token] || token;
+    });
+
+    return [
+      text,
+      tokens.join(" "),
+      tokens.join(" ").replace(/\bjardim\b/g, "jardim")
+    ].filter(Boolean);
+  }
+
+  function expandSearchVariants(value) {
+    const normalized = normalizeString(value || "");
+    if (!normalized) return [];
+
+    const aliasMap = {
+      jd: "jardim",
+      jardim: "jardim",
+      av: "avenida",
+      avenida: "avenida",
+      rua: "rua",
+      r: "rua",
+      praca: "praca",
+      praça: "praca",
+      vl: "vila",
+      vila: "vila"
+    };
+
+    const tokens = normalized.split(/\s+/);
+    const expandedTokens = tokens.flatMap(token => {
+      const base = token.replace(/\.$/, "");
+      const mapped = aliasMap[base] || token;
+      return [token, mapped];
+    });
+
+    const variants = new Set();
+
+    [normalized, ...expandedTokens].forEach(part => {
+      if (!part) return;
+      variants.add(part);
+
+      const replaced = part
+        .split(/\s+/)
+        .map(token => aliasMap[token.replace(/\.$/, "")] || token)
+        .join(" ");
+
+      if (replaced) {
+        variants.add(replaced);
+      }
+    });
+
+    return [...variants].filter(Boolean);
+  }
+
+  function expandSearchTerm(term) {
+    const normalized = normalizeString(term);
+    if (!normalized) return [];
+
+    const aliasMap = {
+      jd: "jardim",
+      jardim: "jardim",
+      av: "avenida",
+      avenida: "avenida",
+      rua: "rua",
+      r: "rua",
+      praca: "praca",
+      praça: "praca",
+      vl: "vila",
+      vila: "vila"
+    };
+
+    const variants = new Set([normalized]);
+    const tokens = normalized.split(/\s+/);
+
+    const expanded = tokens
+      .map(token => aliasMap[token.replace(/\.$/, "")] || token)
+      .join(" ");
+
+    if (expanded) {
+      variants.add(expanded);
+    }
+
+    for (const token of tokens) {
+      const mapped = aliasMap[token.replace(/\.$/, "")] || token;
+      variants.add(mapped);
+    }
+
+    return [...variants].filter(Boolean);
+  }
+
+  function buildValueVariants(value) {
+    const normalized = normalizeString(value);
+    if (!normalized) return [];
+
+    const aliasMap = {
+      jd: "jardim",
+      jardim: "jardim",
+      av: "avenida",
+      avenida: "avenida",
+      rua: "rua",
+      r: "rua",
+      praca: "praca",
+      praça: "praca",
+      vl: "vila",
+      vila: "vila"
+    };
+
+    const variants = new Set([normalized]);
+    const expanded = normalized
+      .split(/\s+/)
+      .map(token => aliasMap[token.replace(/\.$/, "")] || token)
+      .join(" ");
+
+    if (expanded) {
+      variants.add(expanded);
+    }
+
+    return [...variants].filter(Boolean);
+  }
+
+  function timeToMinutes(value) {
+    if (typeof value !== "string") return Number.POSITIVE_INFINITY;
+
+    const match = value.trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return Number.POSITIVE_INFINITY;
+
+    const hours = Number(match[1]);
+    const minutes = Number(match[2]);
+
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+      return Number.POSITIVE_INFINITY;
+    }
+
+    return hours * 60 + minutes;
+  }
+
+  // minutos antes do horário para considerar como "próximo"
+  const NEAR_MINUTES = 10;
+
+  function getCurrentDayKey(now = new Date()) {
+    const day = now.getDay();
+    if (day === 0) return "sunday";
+    if (day === 6) return "saturday";
+    return "weekday";
+  }
+
+  function getScheduleRowsForLine(line, now = new Date()) {
+    const schedule = getScheduleForLine(line);
+    if (!schedule) return [];
+
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const order = [
+      ["weekday", "Dias úteis"],
+      ["saturday", "Sábado"],
+      ["sunday", "Domingo"]
+    ];
+
+    return order
+      .map(([key, label]) => {
+        const times = (schedule[key] || []).map(time => {
+          const minutes = timeToMinutes(time);
+          const diff = Number.isFinite(minutes) ? minutes - currentMinutes : NaN;
+          const isPast = Number.isFinite(minutes) && minutes < currentMinutes;
+          const isNear = Number.isFinite(diff) && diff >= 0 && diff <= NEAR_MINUTES;
+
+          return { time, isPast, isNear };
+        });
+
+        return { key, label, times };
+      })
+      .filter(item => item.times.length);
+  }
+
+  function getUpcomingTimesForLine(line, now = new Date()) {
+    const schedule = getScheduleForLine(line);
+    if (!schedule) return [];
+
+    const dayKey = getCurrentDayKey(now);
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    return (schedule[dayKey] || []).filter(time => {
+      const minutes = timeToMinutes(time);
+      return Number.isFinite(minutes) && minutes >= currentMinutes;
+    });
+  }
+
+  function bindDetailBackButton(panel) {
+    const backButton = $(
+      '[data-action="back-to-search"]',
+      panel
+    );
+
+    if (backButton) {
+      backButton.onclick = () => {
+        state.selectedPointId = null;
+        stopScheduleRefresh();
+        resetInfoPanel();
+      };
+    }
+  }
+
+  function refreshSelectedPointPanel() {
+    if (!state.selectedPointId) return;
+
+    const point = getPointById(state.selectedPointId);
+    if (!point) return;
+
+    const panel = $("#infoPanel");
+    if (!panel) return;
+
+    panel.innerHTML = buildPointPanel(point);
+    bindDetailBackButton(panel);
   }
 
   function getPointById(id) {
@@ -65,6 +296,46 @@
     };
   }
 
+  function stopScheduleRefresh() {
+    if (state.scheduleRefreshTimer) {
+      clearInterval(state.scheduleRefreshTimer);
+      state.scheduleRefreshTimer = null;
+    }
+  }
+
+  function startScheduleRefresh() {
+    stopScheduleRefresh();
+
+    state.scheduleRefreshTimer = setInterval(() => {
+      if (!state.selectedPointId) return;
+      refreshSelectedPointPanel();
+    }, 60000);
+  }
+
+  function getDayScheduleRows(line) {
+    const schedule = getScheduleForLine(line);
+    if (!schedule) return [];
+
+    const entryOrder = [
+      ["weekday", "Dias úteis"],
+      ["saturday", "Sábado"],
+      ["sunday", "Domingo"]
+    ];
+
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    return entryOrder
+      .map(([key, label]) => {
+        const times = (schedule[key] || []).filter(time => {
+          const minutes = timeToMinutes(time);
+          return Number.isFinite(minutes) && minutes >= currentMinutes;
+        });
+
+        return { key, label, times };
+      })
+      .filter(item => item.times.length);
+  }
 
   const MapManager = {
     LINE_COLORS: {
@@ -531,10 +802,7 @@
 
     apply() {
       const input = $("#searchInput");
-      const search =
-        input?.value
-          .trim()
-          .toLowerCase() || "";
+      const search = input?.value.trim().toLowerCase() || "";
 
       if (state.customRouteActive) {
         state.markers.forEach((marker, id) => {
@@ -547,11 +815,15 @@
             state.map.removeLayer(marker);
           }
         });
+
+        if (state.selectedPointId && !state.activeRoutePointIds.has(state.selectedPointId)) {
+          state.selectedPointId = null;
+          resetInfoPanel();
+        }
         return;
       }
 
-      const hasLineFilter =
-        state.activeLines.size > 0;
+      const hasLineFilter = state.activeLines.size > 0;
 
       state.markers.forEach((marker, id) => {
         const point = getPointById(id);
@@ -560,51 +832,60 @@
         let visible = true;
 
         if (hasLineFilter) {
-          visible =
-            point.lines?.some(
-              line =>
-                state.activeLines.has(line)
-            ) || false;
+          visible = point.lines?.some(line => state.activeLines.has(line)) || false;
         }
 
         if (visible && search) {
-          visible =
-            this.matchesSearch(point, search);
+          visible = this.matchesSearch(point, search);
         }
 
         if (visible) {
           if (!state.map.hasLayer(marker)) {
             marker.addTo(state.map);
           }
-        } else {
-          if (state.map.hasLayer(marker)) {
-            state.map.removeLayer(marker);
-          }
+        } else if (state.map.hasLayer(marker)) {
+          state.map.removeLayer(marker);
         }
       });
+
+      if (state.selectedPointId) {
+        const selectedPoint = getPointById(state.selectedPointId);
+        const selectedVisible = !selectedPoint
+          ? false
+          : (!hasLineFilter || selectedPoint.lines?.some(line => state.activeLines.has(line))) &&
+            (!search || this.matchesSearch(selectedPoint, search));
+
+        if (!selectedVisible) {
+          state.selectedPointId = null;
+          resetInfoPanel();
+        }
+      }
     },
 
     matchesSearch(point, text) {
       if (!point) return false;
       if (!text) return true;
 
-      const normalizedSearch = normalizeString(text);
-
-      const values = [
+      const normalizedText = normalizeString(text);
+      const searchTerms = expandSearchTerm(normalizedText);
+      const valueVariants = [
         point.name,
         point.address,
         ...(point.lines || []),
-        ...(point.lines || [])
-          .map(line =>
-            BUS_DATA.lines[line]?.name
-          )
-      ];
+        ...(point.lines || []).map(line => BUS_DATA.lines[line]?.name)
+      ]
+        .filter(Boolean)
+        .map(value => normalizeString(value));
 
-      return values.some(
-        value =>
-          value &&
-          normalizeString(value).includes(normalizedSearch)
-      );
+      return valueVariants.some(value => {
+        const valueTerms = new Set(
+          expandSearchTerm(value)
+        );
+
+        return searchTerms.every(term =>
+          [...valueTerms].some(valueTerm => valueTerm.includes(term))
+        );
+      });
     }
   };
   function initSearch() {
@@ -619,7 +900,7 @@
 
     input.addEventListener(
       "input",
-      debounce(() => {
+      () => {
         FilterManager.apply();
 
         if (!state.selectedPointId) {
@@ -629,23 +910,25 @@
         const point = getPointById(state.selectedPointId);
         if (!point) return;
 
-        const text =
-          input.value
-            .trim()
-            .toLowerCase();
+        const text = input.value.trim();
 
-        if (
-          text &&
-          !FilterManager.matchesSearch(
-            point,
-            text
-          )
-        ) {
+        if (text && !FilterManager.matchesSearch(point, text)) {
           state.selectedPointId = null;
           resetInfoPanel();
         }
-      }, 150)
+      }
     );
+  }
+
+  function setMapControlsVisibility(visible) {
+    [
+      $(".search-box"),
+      $(".filters")
+    ].forEach(element => {
+      if (element) {
+        element.hidden = !visible;
+      }
+    });
   }
 
   function selectPoint(pointId) {
@@ -656,47 +939,45 @@
 
     const panel = $("#infoPanel");
     if (panel) {
-      panel.innerHTML =
-        buildPointPanel(point);
+      panel.innerHTML = buildPointPanel(point);
+      bindDetailBackButton(panel);
     }
 
-    state.map.setView(
-      [point.lat, point.lng],
-      15,
-      {
-        animate: true
-      }
-    );
-
-    state.markers
-      .get(pointId)
-      ?.openPopup();
+    setMapControlsVisibility(false);
+    state.map.setView([point.lat, point.lng], 15, { animate: true });
+    state.markers.get(pointId)?.openPopup();
+    startScheduleRefresh();
   }
 
   function buildPointPanel(point) {
-    const lines =
-      (point.lines || [])
-        .map(line => {
-          const info =
-            BUS_DATA.lines[line];
+    const lines = (point.lines || [])
+      .map(line => {
+        const info = BUS_DATA.lines[line];
 
-          return `
-            <span
-              class="line-tag ${info?.color || ""}"
-              title="${escapeHtml(info?.name || "")}"
-            >
-              ${escapeHtml(line)}
-            </span>
-          `;
-        })
-        .join(" ");
+        return `
+          <span
+            class="line-tag ${info?.color || ""}"
+            title="${escapeHtml(info?.name || "") }"
+          >
+            ${escapeHtml(line)}
+          </span>
+        `;
+      })
+      .join(" ");
 
-    const schedules =
-      (point.lines || [])
-        .map(buildScheduleForLine)
-        .join("");
+    const schedules = (point.lines || [])
+      .map(buildScheduleForLine)
+      .join("");
 
     return `
+      <button
+        type="button"
+        class="btn btn-soft detail-back-button"
+        data-action="back-to-search"
+      >
+         Voltar
+      </button>
+
       <div class="point-name">
         ${escapeHtml(point.name)}
       </div>
@@ -719,93 +1000,69 @@
 
       ${schedules}
 
-      <p class="disclaimer">
-        ⚠️ Horários
-        <strong>referenciais</strong>.
-        Confirme no próprio ponto ou pelo
-        app Moovit antes de sair.
-      </p>
 
-      <p
-        style="
-          margin-top:12px;
-          font-size:0.8rem;
-          color:#78909c
-        "
-      >
-        Operadora:
-        <strong>
-          ${escapeHtml(BUS_DATA.operator)}
-        </strong>
-      </p>
     `;
   }
 
   function buildScheduleForLine(line) {
     const info = BUS_DATA.lines[line];
-    const schedule = getScheduleForLine(line);
+    const rows = getScheduleRowsForLine(line);
 
-    if (!schedule) {
-      return "";
+    if (!rows.length) {
+      return `
+        <div style="margin-top:10px">
+          <h4 style="font-size:0.9rem; color:#1565c0">
+            Linha ${escapeHtml(line)}
+            —
+            ${escapeHtml(info?.name || "")}
+          </h4>
+          <p style="font-size:0.8rem; color:#78909c; margin-top:6px;">
+            Nenhum horário restante hoje.
+          </p>
+        </div>
+      `;
     }
 
-    const days = [
-      ["weekday", "Dias úteis"],
-      ["saturday", "Sábado"],
-      ["sunday", "Domingo"]
-    ];
+    const rowsHtml = rows
+      .map(({ label, times }) => {
+        const timesHtml = times
+          .map(({ time, isPast, isNear }) => `
+            <span class="line-tag time-badge ${isPast ? "time-badge-past" : (isNear ? "time-badge-near" : "")}">
+              ${escapeHtml(time)}
+            </span>
+          `)
+          .join("");
 
-    const rows =
-      days
-        .map(([key, label]) => {
-          const times = schedule[key];
-
-          if (!times?.length) {
-            return "";
-          }
-
-          const timesHtml =
-            times
-              .map(time => `
-                <span class="line-tag">
-                  ${escapeHtml(time)}
-                </span>
-              `)
-              .join(" ");
-
-          return `
-            <tr>
-              <th>${label}</th>
-              <td>${timesHtml}</td>
-            </tr>
-          `;
-        })
-        .join("");
+        return `
+          <tr>
+            <th>${label}</th>
+            <td>
+              <div class="time-badge-list">${timesHtml}</div>
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
 
     return `
       <div style="margin-top:10px">
-
-        <h4
-          style="
-            font-size:0.9rem;
-            color:#1565c0
-          "
-        >
+        <h4 style="font-size:0.9rem; color:#1565c0">
           Linha ${escapeHtml(line)}
           —
           ${escapeHtml(info?.name || "")}
         </h4>
 
         <table class="time-table">
-          ${rows}
+          ${rowsHtml}
         </table>
-
       </div>
     `;
   }
 
   function resetInfoPanel() {
     const panel = $("#infoPanel");
+
+    setMapControlsVisibility(true);
 
     if (!panel) return;
 
@@ -821,11 +1078,6 @@
         <li>🚌 Linhas que passam</li>
         <li>⏰ Horários</li>
       </ul>
-
-      <p class="disclaimer">
-        <strong>Atenção:</strong>
-        Os horários são referenciais.
-      </p>
     `;
   }
 
@@ -837,66 +1089,37 @@
     state.initialized.tabs = true;
 
     $$(".tab-btn").forEach(button => {
-      button.addEventListener(
-        "click",
-        () => {
-          switchView(
-            button.dataset.view
-          );
-        }
-      );
+      button.addEventListener("click", () => {
+        switchView(button.dataset.view);
+      });
     });
   }
 
   function switchView(name) {
     $$(".tab-btn").forEach(button => {
-      button.classList.toggle(
-        "active",
-        button.dataset.view === name
-      );
+      button.classList.toggle("active", button.dataset.view === name);
     });
 
-    const mapSidebar =
-      $("#mapSidebar");
-
-    const cardView =
-      $("#cardView");
-
-    const routeView =
-      $("#routeView");
-
-    const supportView =
-      $("#supportView");
-
-    const map =
-      $("#map");
+    const mapSidebar = $("#mapSidebar");
+    const cardView = $("#cardView");
+    const routeView = $("#routeView");
+    const supportView = $("#supportView");
+    const map = $("#map");
 
     if (mapSidebar) {
-      mapSidebar.style.display =
-        name === "map"
-          ? "flex"
-          : "none";
+      mapSidebar.style.display = name === "map" ? "flex" : "none";
     }
 
     if (cardView) {
-      cardView.style.display =
-        name === "card"
-          ? "flex"
-          : "none";
+      cardView.style.display = name === "card" ? "flex" : "none";
     }
 
     if (routeView) {
-      routeView.style.display =
-        name === "route"
-          ? "flex"
-          : "none";
+      routeView.style.display = name === "route" ? "flex" : "none";
     }
 
     if (supportView) {
-      supportView.style.display =
-        name === "support"
-          ? "flex"
-          : "none";
+      supportView.style.display = name === "support" ? "flex" : "none";
     }
 
     if (map) {
@@ -1467,65 +1690,65 @@
     }
 
 
+    const actions = document.createElement("div");
+    actions.className = "route-actions";
+
+    const submitBtn = form.querySelector("button[type='submit']");
+    if (submitBtn) {
+      submitBtn.classList.add("btn-primary");
+      actions.appendChild(submitBtn);
+    }
+
+    const clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.id = "clearRouteBtn";
+    clearBtn.className = "btn btn-soft";
+    clearBtn.textContent = "Limpar trajeto";
+    clearBtn.style.display = "none";
+    actions.appendChild(clearBtn);
+
+    form.appendChild(actions);
+
+    clearBtn.addEventListener("click", () => {
+      MapManager.clearCustomRoute();
+      result.innerHTML = `
+        <p class="empty-msg">Selecione origem e destino para ver as opções de linha.</p>
+      `;
+      clearBtn.style.display = "none";
+    });
+
     form.addEventListener(
       "submit",
       event => {
 
         event.preventDefault();
 
+        const originId = origin.value;
+        const destinationId = destination.value;
 
-        const originId =
-          origin.value;
-
-        const destinationId =
-          destination.value;
-
-
-        if (
-          !originId ||
-          !destinationId
-        ) {
+        if (!originId || !destinationId) {
           return;
         }
 
-
-        if (
-          originId === destinationId
-        ) {
-
+        if (originId === destinationId) {
           result.innerHTML = `
             <div class="route-no-result">
               Origem e destino são iguais
             </div>
           `;
-
+          clearBtn.style.display = "none";
           return;
         }
 
+        const direct = RoutePlanner.findDirect(originId, destinationId);
+        const transfer = RoutePlanner.findWithTransfer(originId, destinationId);
 
-        const direct =
-          RoutePlanner.findDirect(
-            originId,
-            destinationId
-          );
+        RoutePlanner.render({
+          direct,
+          transfer
+        }, result, originId, destinationId);
 
-
-        const transfer =
-          RoutePlanner.findWithTransfer(
-            originId,
-            destinationId
-          );
-
-
-        RoutePlanner.render(
-          {
-            direct,
-            transfer
-          },
-          result,
-          originId,
-          destinationId
-        );
+        clearBtn.style.display = "inline-flex";
       }
     );
   }
@@ -1533,6 +1756,7 @@
 
   const CardManager = {
     KEY: "buspass.cards.v1",
+    BLOCKED_KEY: "buspass.blocked.cards.v1",
 
     digitRegex: /\D/g,
 
@@ -1659,6 +1883,67 @@
       );
     },
 
+    loadBlocked() {
+      try {
+        const blocked = JSON.parse(
+          localStorage.getItem(this.BLOCKED_KEY) || "[]"
+        );
+
+        return Array.isArray(blocked) ? blocked : [];
+      } catch {
+        return [];
+      }
+    },
+
+    saveBlocked(blocked) {
+      localStorage.setItem(
+        this.BLOCKED_KEY,
+        JSON.stringify(blocked)
+      );
+    },
+
+    blockedCardKey(id, usuarioId) {
+      const session = Auth.getSession();
+      return `${usuarioId || session?.id || "anonymous"}:${id}`;
+    },
+
+    isBlocked(card) {
+      if (!card) {
+        return false;
+      }
+
+      if (card.bloqueado === true) {
+        return true;
+      }
+
+      return this.loadBlocked().includes(
+        this.blockedCardKey(card.id, card.usuarioId)
+      );
+    },
+
+    markBlocked(id) {
+      const session = Auth.getSession();
+      const key = this.blockedCardKey(id, session && session.id);
+      const blocked = this.loadBlocked();
+
+      if (!blocked.includes(key)) {
+        blocked.push(key);
+        this.saveBlocked(blocked);
+      }
+
+      const cards = this.loadLocal();
+      const localCard = cards.find(
+        card =>
+          String(card.id) === String(id) &&
+          card.usuarioId == session?.id
+      );
+
+      if (localCard) {
+        localCard.bloqueado = true;
+        this.saveLocal(cards);
+      }
+    },
+
     async listar() {
 
       const session =
@@ -1681,7 +1966,10 @@
           response &&
           !response.offline
         ) {
-          return response;
+          return response.map(card => ({
+            ...card,
+            bloqueado: this.isBlocked(card)
+          }));
         }
 
       } catch (error) {
@@ -1698,7 +1986,11 @@
         .filter(
           card =>
             card.usuarioId == session.id
-        );
+        )
+        .map(card => ({
+          ...card,
+          bloqueado: this.isBlocked(card)
+        }));
     },
 
     async criar(data) {
@@ -1766,7 +2058,8 @@
 
         ...payload,
 
-        recargas: 0
+        recargas: 0,
+        bloqueado: false
       };
 
 
@@ -1782,6 +2075,12 @@
       id,
       valorReais
     ) {
+      if (this.isBlocked({ id })) {
+        return {
+          ok: false,
+          msg: "Este cartão está bloqueado e não pode mais ser recarregado."
+        };
+      }
 
       const valorCentavos =
         this.toCentavos(
@@ -1855,6 +2154,23 @@
       };
     },
 
+    bloquear(id) {
+      if (this.isBlocked({ id })) {
+        return true;
+      }
+
+      const confirmed = window.confirm(
+        "Atenção: Deseja continuar com esta ação?"
+      );
+
+      if (!confirmed) {
+        return false;
+      }
+
+      this.markBlocked(id);
+      return true;
+    },
+
     async deletar(id) {
 
       try {
@@ -1906,19 +2222,22 @@
         cards
           .map(card => {
 
-            const quick =
-              [10, 20, 50, 100]
-                .map(value => `
-                  <button
-                    type="button"
-                    class="quick-amt"
-                    data-quick="${value}"
-                    data-card-id="${card.id}"
-                  >
-                    +R$${value}
-                  </button>
-                `)
-                .join("");
+            const blocked = this.isBlocked(card);
+
+            const quick = blocked
+              ? ""
+              : [10, 20, 50, 100]
+                  .map(value => `
+                    <button
+                      type="button"
+                      class="quick-amt"
+                      data-quick="${value}"
+                      data-card-id="${card.id}"
+                    >
+                      +R$${value}
+                    </button>
+                  `)
+                  .join("");
 
             const balance =
               this.toReais(
@@ -1927,7 +2246,7 @@
 
             return `
               <div
-                class="card-item"
+                class="card-item${blocked ? " is-blocked" : ""}"
                 data-card-id="${card.id}"
               >
 
@@ -1945,6 +2264,10 @@
 
                   </div>
 
+                  <span class="card-status${blocked ? " blocked" : ""}">
+                    ${blocked ? "Bloqueado" : "Ativo"}
+                  </span>
+
                 </div>
 
                 <div class="card-item-number">
@@ -1960,43 +2283,50 @@
 
                 </div>
 
-                <div class="recharge-box">
-
-                  <div class="recharge-title">
-                     Carregar saldo
+                ${blocked ? `
+                  <div class="blocked-card-notice" role="status">
+                    <strong>Cartão bloqueado</strong>
+                    <span>Não é possível recuperar e recarregar este cartão. Você pode solicitar a 2ª via,entrando em contato pelo suporte.</span>
                   </div>
+                ` : `
+                  <div class="recharge-box">
 
-                  <div class="recharge-row">
+                    <div class="recharge-title">
+                       Carregar saldo
+                    </div>
 
-                    <input
-                      type="number"
-                      min="1"
-                      max="1000"
-                      step="0.01"
-                      placeholder="Valor (R$)"
-                      data-recharge-input="${card.id}"
-                    />
+                    <div class="recharge-row">
 
-                    <button
-                      type="button"
-                      class="btn btn-primary recharge-btn"
-                      data-recharge-id="${card.id}"
-                    >
-                      Recarregar
-                    </button>
+                      <input
+                        type="number"
+                        min="1"
+                        max="1000"
+                        step="0.01"
+                        placeholder="Valor (R$)"
+                        data-recharge-input="${card.id}"
+                      />
+
+                      <button
+                        type="button"
+                        class="btn btn-primary recharge-btn"
+                        data-recharge-id="${card.id}"
+                      >
+                        Recarregar
+                      </button>
+
+                    </div>
+
+                    <div class="recharge-quick">
+                      ${quick}
+                    </div>
+
+                    <p
+                      class="recharge-feedback"
+                      data-feedback="${card.id}"
+                    ></p>
 
                   </div>
-
-                  <div class="recharge-quick">
-                    ${quick}
-                  </div>
-
-                  <p
-                    class="recharge-feedback"
-                    data-feedback="${card.id}"
-                  ></p>
-
-                </div>
+                `}
 
                 <div class="card-item-actions">
 
@@ -2004,15 +2334,27 @@
                     class="recharge-count"
                     data-recharge-count
                   >
-                    ${card.recargas || 0} recarga(s)
+                    ${blocked ? "Cartão bloqueado" : `${card.recargas || 0} recarga(s)`}
                   </span>
 
-                  <button
-                    class="btn btn-danger"
-                    data-remove-id="${card.id}"
-                  >
-                    Excluir
-                  </button>
+                  <div class="card-action-buttons">
+                    <button
+                      type="button"
+                      class="btn btn-warning"
+                      data-block-id="${card.id}"
+                      ${blocked ? "disabled" : ""}
+                    >
+                      ${blocked ? " bloqueado" : "Bloquear"}
+                    </button>
+
+                    <button
+                      type="button"
+                      class="btn btn-danger"
+                      data-remove-id="${card.id}"
+                    >
+                      Excluir
+                    </button>
+                  </div>
 
                 </div>
 
@@ -2023,13 +2365,21 @@
 
       const self = this;
 
-      container.addEventListener(
-        "click",
-        async event => {
+      if (!container.dataset.cardEventsBound) {
+        container.dataset.cardEventsBound = "true";
+
+        container.addEventListener(
+          "click",
+          async event => {
 
           const removeBtn =
             event.target.closest(
               "[data-remove-id]"
+            );
+
+          const blockBtn =
+            event.target.closest(
+              "[data-block-id]"
             );
 
           const rechargeBtn =
@@ -2042,7 +2392,17 @@
               "[data-quick]"
             );
 
-          if (removeBtn) {
+          if (blockBtn) {
+
+            const blocked = self.bloquear(
+              blockBtn.dataset.blockId
+            );
+
+            if (blocked) {
+              await self.render(container);
+            }
+
+          } else if (removeBtn) {
 
             await self.deletar(
               removeBtn.dataset.removeId
@@ -2095,11 +2455,15 @@
             );
           }
         }
-      );
+        );
+      }
 
-      container.addEventListener(
-        "keydown",
-        async event => {
+      if (!container.dataset.cardKeyEventsBound) {
+        container.dataset.cardKeyEventsBound = "true";
+
+        container.addEventListener(
+          "keydown",
+          async event => {
 
           if (event.key !== "Enter") {
             return;
@@ -2130,8 +2494,9 @@
           );
 
           input.value = "";
-        }
-      );
+          }
+        );
+      }
     },
 
     async processRecharge(
@@ -2140,6 +2505,12 @@
       feedbackElement,
       container
     ) {
+      if (this.isBlocked({ id: cardId })) {
+        feedbackElement.textContent = " O cartão está bloqueado e não pode receber recargas.";
+        feedbackElement.className = "recharge-feedback error";
+        return;
+      }
+
       const amount = Number(value);
 
       if (isNaN(amount) || amount <= 0) {
@@ -2966,17 +3337,4 @@
       initAuth();
     }
   );
-
-  return `
-  <div class="route-card" data-focus>
-    <img src="assets/trajeto-bus.jpg" alt="Trajeto" class="route-image">
-
-    <div class="route-card-title">
-      <span class="badge">Linha ${escapeHtml(route.line)}</span>
-      ${escapeHtml(info?.name || "")}
-    </div>
-
-    ...
-  </div>
-`;
 })();

@@ -97,7 +97,7 @@ const BUS_DATA = {
   },
 
   routes: {
-  "01": ["p27", "p27", "p28", "p2", "p60", "p1", "p21", "p7", "p22", "p53", "p58", "p73", "p11", "p63", "p26", "p84"],
+  "01": ["p27","p62", "p27", "p28", "p2", "p60", "p1", "p21", "p7", "p22", "p53", "p58", "p73", "p11", "p63", "p26", "p84"],
   "03": ["p52", "p51", "p37", "p55", "p64", "p38", "p6", "p35", "p36", "p57", "p76", "p65", "p69", "p59", "p50", "p71", "p74", "p72", "p75", "p47", "p17", "p23", "p26", "p11", "p21", "p1", "p3"],
   "04": ["p29", "p30", "p3", "p54", "p85", "p66", "p47", "p17", "p23", "p26", "p11", "p21", "p1", "p73", "p58", "p50", "p71", "p74", "p59", "p10", "p15", "p18", "p24"],
   "06": ["p52", "p51", "p39", "p28", "p27", "p40", "p8", "p10", "p31", "p32", "p78", "p80", "p62", "p1", "p21", "p15", "p24", "p68", "p49", "p70", "p53", "p5", "p7", "p9", "p11", "p22", "p23", "p61"],
@@ -183,8 +183,8 @@ const BUS_DATA = {
     id: "p9",
     name: "USP São Carlos (EESC/IAU)",
     address: "Av. Trabalhador São-carlense, 400",
-    lat: -22.0044,
-    lng: -47.9270,
+    lat: -22.0069910,
+    lng: -47.8965829,
     type: "stop",
     lines: ["06", "13"]
   },
@@ -226,7 +226,7 @@ const BUS_DATA = {
   },
   {
     id: "p21",
-    name: "Ponto Av. São Carlos (Centro)",
+    name: " Av. São Carlos",
     address: "Av. São Carlos, 1200 - Centro",
     lat: -22.0192,
     lng: -47.8912,
@@ -235,7 +235,7 @@ const BUS_DATA = {
   },
   {
     id: "p22",
-    name: "Ponto R. Episcopal (Centro)",
+    name: " R. Episcopal ",
     address: "R. Episcopal, 800 - Centro",
     lat: -22.0184,
     lng: -47.8890,
@@ -244,7 +244,7 @@ const BUS_DATA = {
   },
   {
     id: "p23",
-    name: "Ponto Av. Dr. Carlos Botelho",
+    name: " Av. Dr. Carlos Botelho",
     address: "Av. Dr. Carlos Botelho - Vila Prado",
     lat: -22.0240,
     lng: -47.9005,
@@ -253,7 +253,7 @@ const BUS_DATA = {
   },
   {
     id: "p24",
-    name: "Ponto R. 7 de Setembro",
+    name: " R. 7 de Setembro",
     address: "R. 7 de Setembro, 1500 - Centro",
     lat: -22.0195,
     lng: -47.8848,
@@ -263,25 +263,17 @@ const BUS_DATA = {
 
   {
     id: "p25",
-    name: "Ponto Jd. Lutfalla",
-    address: "Av. Trabalhador São-carlense - Jd. Lutfalla",
+    name: "Parque Sisi",
+    address: "R. francisco gentil de guzzi",
     lat: -22.0018,
     lng: -47.9215,
     type: "stop",
     lines: ["13", "18"]
   },
-  {
-    id: "p26",
-    name: "Ponto R. Paulino Botelho (Santa Casa)",
-    address: "R. Paulino Botelho de Abreu Sampaio - Centro",
-    lat: -22.0128,
-    lng: -47.8900,
-    type: "stop",
-    lines: ["01", "03", "04", "13"]
-  },
+  
   {
     id: "p27",
-    name: "Ponto Cidade Aracy I",
+    name: " Cidade Aracy I",
     address: "Av. João Sabino, 500 - Cidade Aracy",
     lat: -22.0715,
     lng: -47.8850,
@@ -290,7 +282,7 @@ const BUS_DATA = {
   },
   {
     id: "p28",
-    name: "Ponto Cidade Aracy II",
+    name: " Cidade Aracy II",
     address: "R. José Bonifácio - Cidade Aracy",
     lat: -22.0690,
     lng: -47.8820,
@@ -299,7 +291,7 @@ const BUS_DATA = {
   },
   {
     id: "p29",
-    name: "Ponto Vila Nery I",
+    name: " Vila Nery I",
     address: "R. Marechal Deodoro - Vila Nery",
     lat: -22.0160,
     lng: -47.8845,
@@ -308,7 +300,7 @@ const BUS_DATA = {
   },
   {
     id: "p30",
-    name: "Ponto Vila Nery II",
+    name: " Vila Nery II",
     address: "Av. São Carlos, 2500 - Vila Nery",
     lat: -22.0135,
     lng: -47.8820,
@@ -317,7 +309,7 @@ const BUS_DATA = {
   },
   {
     id: "p31",
-    name: "Ponto Maria Stella Fagá I",
+    name: " Maria Stella Fagá I",
     address: "Av. Bruno Ruggiero Filho, 800 - Maria Stella Fagá",
     lat: -22.0115,
     lng: -47.8685,
@@ -326,7 +318,7 @@ const BUS_DATA = {
   },
   {
     id: "p32",
-    name: "Ponto Maria Stella Fagá II",
+    name: " Maria Stella Fagá II",
     address: "R. dos Pessegueiros - Maria Stella Fagá",
     lat: -22.0100,
     lng: -47.8655,
@@ -335,7 +327,7 @@ const BUS_DATA = {
   },
   {
     id: "p33",
-    name: "Ponto Cruzeiro do Sul I",
+    name: " Cruzeiro do Sul I",
     address: "R. Alfredo Lopes de Oliveira, 200 - Cruzeiro do Sul",
     lat: -22.0375,
     lng: -47.8915,
@@ -344,7 +336,7 @@ const BUS_DATA = {
   },
   {
     id: "p34",
-    name: "Ponto Cruzeiro do Sul II",
+    name: " Cruzeiro do Sul II",
     address: "R. dos Andradas - Cruzeiro do Sul",
     lat: -22.0360,
     lng: -47.8940,
@@ -353,43 +345,43 @@ const BUS_DATA = {
   },
   {
     id: "p35",
-    name: "Ponto Parque Delta I",
+    name: " Parque Delta I",
     address: "Av. Victor Attanasio, 300 - Parque Delta",
-    lat: -21.9935,
-    lng: -47.9070,
+    lat: -21.9907035,
+    lng: -47.8959997,
     type: "stop",
     lines: ["03", "08", "18"]
   },
   {
     id: "p36",
-    name: "Ponto Parque Delta II",
+    name: " Parque Delta II",
     address: "R. das Acácias - Parque Delta",
-    lat: -21.9905,
-    lng: -47.9050,
+    lat: -21.9899271,
+    lng: -47.8939368,
     type: "stop",
     lines: ["03", "08", "18"]
   },
   {
     id: "p37",
-    name: "Ponto Santa Felícia I",
+    name: " Santa Felícia I",
     address: "R. Episcopal - Santa Felícia",
-    lat: -21.9845,
-    lng: -47.9150,
+    lat: -21.9996565,
+    lng: -47.9122774,
     type: "stop",
     lines: ["03"]
   },
   {
     id: "p38",
-    name: "Ponto Santa Felícia II",
+    name: " Santa Felícia II",
     address: "Av. São Carlos, 3000 - Santa Felícia",
-    lat: -21.9870,
-    lng: -47.9120,
+    lat: -21.996813,
+    lng: -47.9150490,
     type: "stop",
     lines: ["03"]
   },
   {
     id: "p39",
-    name: "Ponto São Carlos III I",
+    name: " São Carlos III I",
     address: "Av. José Pereira Lopes - São Carlos III",
     lat: -22.0315,
     lng: -47.9020,
@@ -398,7 +390,7 @@ const BUS_DATA = {
   },
   {
     id: "p40",
-    name: "Ponto São Carlos III II",
+    name: " São Carlos III II",
     address: "R. dos Lírios - São Carlos III",
     lat: -22.0330,
     lng: -47.9000,
@@ -407,7 +399,7 @@ const BUS_DATA = {
   },
   {
     id: "p41",
-    name: "Ponto Botafogo I",
+    name: " Botafogo I",
     address: "R. Bento Carlos - Botafogo",
     lat: -22.0155,
     lng: -47.8965,
@@ -416,7 +408,7 @@ const BUS_DATA = {
   },
   {
     id: "p43",
-    name: "Ponto Tijuco Preto I",
+    name: " Tijuco Preto I",
     address: "R. XV de Novembro - Tijuco Preto",
     lat: -22.0220,
     lng: -47.8985,
@@ -425,7 +417,7 @@ const BUS_DATA = {
   },
   {
     id: "p44",
-    name: "Ponto Tijuco Preto II",
+    name: " Tijuco Preto II",
     address: "Av. da Saudade - Tijuco Preto",
     lat: -22.0235,
     lng: -47.8970,
@@ -434,7 +426,7 @@ const BUS_DATA = {
   },
   {
     id: "p45",
-    name: "Ponto Marilândia I",
+    name: " Marilândia I",
     address: "R. das Flores - Marilândia",
     lat: -22.0080,
     lng: -47.8720,
@@ -443,7 +435,7 @@ const BUS_DATA = {
   },
   {
     id: "p46",
-    name: "Ponto Marilândia II",
+    name: " Marilândia II",
     address: "Av. Brasil, 800 - Marilândia",
     lat: -22.0065,
     lng: -47.8700,
@@ -452,7 +444,7 @@ const BUS_DATA = {
   },
   {
     id: "p47",
-    name: "Ponto Vila Prado",
+    name: " Vila Prado",
     address: "R. dos Operários - Vila Prado",
     lat: -22.0265,
     lng: -47.8955,
@@ -462,7 +454,7 @@ const BUS_DATA = {
  
   {
     id: "p49",
-    name: "Ponto Jd. Acapulco",
+    name: " Jd. Acapulco",
     address: "Av. das Palmeiras - Jd. Acapulco",
     lat: -22.0120,
     lng: -47.8635,
@@ -471,7 +463,7 @@ const BUS_DATA = {
   },
   {
     id: "p50",
-    name: "Ponto Jd. Santa Paula",
+    name: " Jd. Santa Paula",
     address: "R. dos Ipês - Jd. Santa Paula",
     lat: -22.0210,
     lng: -47.9150,
@@ -480,7 +472,7 @@ const BUS_DATA = {
   },
   {
     id: "p51",
-    name: "Ponto Jd. Beatriz",
+    name: " Jd. Beatriz",
     address: "R. das Margaridas - Jd. Beatriz",
     lat: -22.0285,
     lng: -47.9125,
@@ -488,7 +480,7 @@ const BUS_DATA = {
     lines: ["03", "06", "13"]
   },{
     id: "p52",
-    name: "Ponto Jd. Novo Mundo",
+    name: " Jd. Novo Mundo",
     address: "Av. das Indústrias - Jd. Novo Mundo",
     lat: -22.0380,
     lng: -47.8860,
@@ -497,7 +489,7 @@ const BUS_DATA = {
   },
   {
     id: "p53",
-    name: "Ponto Jd. São Paulo",
+    name: " Jd. São Paulo",
     address: "R. dos Jasmins - Jd. São Paulo",
     lat: -22.0160,
     lng: -47.8800,
@@ -506,7 +498,7 @@ const BUS_DATA = {
   },
   {
     id: "p54",
-    name: "Ponto Jd. das Torres",
+    name: " Jd. das Torres",
     address: "R. das Acácias, 200 - Jd. das Torres",
     lat: -21.9880,
     lng: -47.9220,
@@ -515,16 +507,16 @@ const BUS_DATA = {
   },
   {
     id: "p55",
-    name: "Ponto Jd. Monte Carlo",
+    name: " Jd. Monte Carlo",
     address: "Av. das Palmeiras, 600 - Jd. Monte Carlo",
-    lat: -21.9860,
-    lng: -47.9180,
+    lat: -21.9865,
+    lng: -47.9165,
     type: "stop",
     lines: ["03"]
   },
   {
     id: "p56",
-    name: "Ponto Jd. Paulista",
+    name: " Jd. Paulista",
     address: "R. dos Bandeirantes - Jd. Paulista",
     lat: -22.0225,
     lng: -47.9020,
@@ -533,7 +525,7 @@ const BUS_DATA = {
   },
   {
     id: "p57",
-    name: "Ponto Jd. Brasil",
+    name: " Jd. Brasil",
     address: "R. dos Pioneiros - Jd. Brasil",
     lat: -22.0080,
     lng: -47.8760,
@@ -542,7 +534,7 @@ const BUS_DATA = {
   },
   {
     id: "p58",
-    name: "Ponto Jd. Ricetti",
+    name: " Jd. Ricetti",
     address: "R. das Oliveiras - Jd. Ricetti",
     lat: -22.0090,
     lng: -47.9085,
@@ -551,7 +543,7 @@ const BUS_DATA = {
   },
   {
     id: "p59",
-    name: "Ponto Jd. Cardinalli",
+    name: " Jd. Cardinalli",
     address: "R. dos Lírios, 300 - Jd. Cardinalli",
     lat: -22.0085,
     lng: -47.8640,
@@ -560,7 +552,7 @@ const BUS_DATA = {
   },
   {
     id: "p60",
-    name: "Ponto Jd. Alvorada",
+    name: " Jd. Alvorada",
     address: "Av. dos Migrantes - Jd. Alvorada",
     lat: -21.9835,
     lng: -47.9090,
@@ -569,7 +561,7 @@ const BUS_DATA = {
   },
   {
     id: "p61",
-    name: "Ponto Jd. Real",
+    name: " Jd. Real",
     address: "R. dos Pinhais - Jd. Real",
     lat: -22.0280,
     lng: -47.8860,
@@ -578,16 +570,16 @@ const BUS_DATA = {
   },
   {
     id: "p62",
-    name: "Ponto Jd. Pacaembu",
+    name: " Jd. Pacaembu",
     address: "R. dos Esportes - Jd. Pacaembu",
     lat: -22.0005,
     lng: -47.8980,
     type: "stop",
-    lines: ["06", "18"]
+    lines: ["06", "18","01"]
   },
   {
     id: "p63",
-    name: "Ponto Jd. Centenário",
+    name: " Jd. Centenário",
     address: "R. dos Pinheiros, 500 - Jd. Centenário",
     lat: -22.0025,
     lng: -47.8870,
@@ -596,7 +588,7 @@ const BUS_DATA = {
   },
   {
     id: "p64",
-    name: "Ponto Jd. Hikari",
+    name: " Jd. Hikari",
     address: "R. das Cerejeiras - Jd. Hikari",
     lat: -21.9810,
     lng: -47.9130,
@@ -605,7 +597,7 @@ const BUS_DATA = {
   },
   {
     id: "p65",
-    name: "Ponto Jd. das Flores",
+    name: " Jd. das Flores",
     address: "R. das Violetas - Jd. das Flores",
     lat: -22.0120,
     lng: -47.8670,
@@ -614,7 +606,7 @@ const BUS_DATA = {
   },
   {
     id: "p66",
-    name: "Ponto Jd. Tambaú",
+    name: " Jd. Tambaú",
     address: "R. dos Jacarandás - Jd. Tambaú",
     lat: -22.0215,
     lng: -47.8780,
@@ -623,7 +615,7 @@ const BUS_DATA = {
   },
   {
     id: "p67",
-    name: "Ponto Jd. Bandeirantes",
+    name: " Jd. Bandeirantes",
     address: "Av. dos Bandeirantes - Jd. Bandeirantes",
     lat: -22.0070,
     lng: -47.9140,
@@ -632,7 +624,7 @@ const BUS_DATA = {
   },
   {
     id: "p68",
-    name: "Ponto Jd. Nair",
+    name: " Jd. Nair",
     address: "R. dos Cravos - Jd. Nair",
     lat: -22.0145,
     lng: -47.8700,
@@ -641,7 +633,7 @@ const BUS_DATA = {
   },
   {
     id: "p69",
-    name: "Ponto Jd. Tangará",
+    name: " Jd. Tangará",
     address: "R. dos Tangarás - Jd. Tangará",
     lat: -22.0290,
     lng: -47.8700,
@@ -650,7 +642,7 @@ const BUS_DATA = {
   },
   {
     id: "p70",
-    name: "Ponto Jd. Acapulco II",
+    name: " Jd. Acapulco II",
     address: "R. das Acácias, 800 - Jd. Acapulco",
     lat: -22.0110,
     lng: -47.8680,
@@ -659,7 +651,7 @@ const BUS_DATA = {
   },
   {
     id: "p71",
-    name: "Ponto Jd. Vista Alegre",
+    name: " Jd. Vista Alegre",
     address: "R. dos Coqueiros - Jd. Vista Alegre",
     lat: -22.0230,
     lng: -47.8830,
@@ -668,7 +660,7 @@ const BUS_DATA = {
   },
   {
     id: "p72",
-    name: "Ponto Jd. São José",
+    name: " Jd. São José",
     address: "R. dos Lírios, 700 - Jd. São José",
     lat: -22.0270,
     lng: -47.9050,
@@ -677,15 +669,15 @@ const BUS_DATA = {
   },
   {
     id: "p73",
-    name: "Ponto Jd. Ipanema",
-    address: "R. dos Manacás - Jd. Ipanema",
+    name: " Jd. jockey clube",
+    address: "R. dos Manacás - Jd. jockey clube",
     lat: -21.9800,
     lng: -47.9050,
     type: "stop",
     lines: ["01", "04", "13"]
   },{
     id: "p74",
-    name: "Ponto Jd. Santa Maria",
+    name: " Jd. Santa Maria",
     address: "R. dos Crisântemos - Jd. Santa Maria",
     lat: -22.0320,
     lng: -47.8820,
@@ -694,7 +686,7 @@ const BUS_DATA = {
   },
   {
     id: "p75",
-    name: "Ponto Jd. São Sebastião",
+    name: " Jd. São Sebastião",
     address: "R. dos Andradas, 400 - Jd. São Sebastião",
     lat: -22.0220,
     lng: -47.8920,
@@ -703,7 +695,7 @@ const BUS_DATA = {
   },
   {
     id: "p76",
-    name: "Ponto Jd. Santa Mônica",
+    name: " Jd. Santa Mônica",
     address: "R. das Hortênsias - Jd. Santa Mônica",
     lat: -21.9890,
     lng: -47.9080,
@@ -712,7 +704,7 @@ const BUS_DATA = {
   },
   {
     id: "p77",
-    name: "Ponto Jd. dos Coqueiros",
+    name: " Jd. dos Coqueiros",
     address: "R. dos Coqueiros, 200 - Jd. dos Coqueiros",
     lat: -21.9830,
     lng: -47.9150,
@@ -721,7 +713,7 @@ const BUS_DATA = {
   },
   {
     id: "p78",
-    name: "Ponto Jd. Boa Vista",
+    name: " Jd. Boa Vista",
     address: "R. das Mangueiras - Jd. Boa Vista",
     lat: -22.0250,
     lng: -47.8980,
@@ -730,7 +722,7 @@ const BUS_DATA = {
   },
   {
     id: "p79",
-    name: "Ponto Jd. Cruzeiro",
+    name: " Jd. Cruzeiro",
     address: "R. dos Cedros - Jd. Cruzeiro",
     lat: -22.0350,
     lng: -47.8940,
@@ -739,7 +731,7 @@ const BUS_DATA = {
   },
   {
     id: "p80",
-    name: "Ponto Jd. Santa Efigênia",
+    name: " Jd. Santa Efigênia",
     address: "R. dos Plátanos - Jd. Santa Efigênia",
     lat: -22.0115,
     lng: -47.9055,
@@ -748,7 +740,7 @@ const BUS_DATA = {
   },
   {
     id: "p81",
-    name: "Ponto Residencial Itamaraty",
+    name: " Residencial Itamaraty",
     address: "Av. Dr. Aurélio Catani - Res. Itamaraty",
     lat: -22.0000,
     lng: -47.8535,
@@ -757,7 +749,7 @@ const BUS_DATA = {
   },
   {
     id: "p82",
-    name: "Ponto Maria Stella Fagá",
+    name: " Maria Stella Fagá",
     address: "Av. João De Lourenço - Parque Res. Maria Stella Fagá",
     lat: -22.0130,
     lng: -47.8620,
@@ -766,7 +758,7 @@ const BUS_DATA = {
   },
   {
     id: "p83",
-    name: "Ponto São Carlos VIII",
+    name: " São Carlos VIII",
     address: "Av. Cap. Luiz Brandão - São Carlos VIII",
     lat: -21.9980,
     lng: -47.8670,
@@ -775,8 +767,8 @@ const BUS_DATA = {
   },
   {
     id: "p84",
-    name: "Ponto Residencial Eldorado",
-    address: "R. Miguel Petroni - Res. Eldorado",
+    name: " Residencial village sao carlos I",
+    address: "R. Miguel Petroni - Res. village",
     lat: -21.9750,
     lng: -47.9010,
     type: "stop",
@@ -784,7 +776,7 @@ const BUS_DATA = {
   },
   {
     id: "p85",
-    name: "Ponto Parque Novo Mundo",
+    name: " Parque Novo Mundo",
     address: "Av. Bruno Ruggiero Filho - Parque Novo Mundo",
     lat: -21.9960,
     lng: -47.9150,
