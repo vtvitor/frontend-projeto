@@ -2159,11 +2159,25 @@
         return true;
       }
 
-      const confirmed = window.confirm(
-        "Atenção: Deseja continuar com esta ação?"
-      );
+      const session = Auth.getSession();
+      const password = prompt("Para bloquear o cartão, por favor, confirme sua senha:");
 
-      if (!confirmed) {
+      if (password === null) {
+        return false;
+      }
+
+      if (!password || password.length < 6) {
+        alert("Senha inválida. A senha deve ter no mínimo 6 caracteres.");
+        return false;
+      }
+
+      // Nota: Em um sistema real, a validação da senha seria feita via API no backend.
+      // Aqui, para fins de demonstração no front-end, validamos a senha do usuário logado.
+      const users = Auth.loadUsers();
+      const user = users.find(u => u.id === session?.id || u.email === session?.email);
+
+      if (!user || user.senha !== password) {
+        alert("Senha incorreta. O cartão não foi bloqueado.");
         return false;
       }
 
