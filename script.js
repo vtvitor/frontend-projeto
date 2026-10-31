@@ -3375,6 +3375,8 @@
     }
   }
 
+  window.BusPassInternals = { state, MapManager, RoutePlanner, RouteGeometry, FilterManager, getPointById, pointLabel, escapeHtml };
+
   document.addEventListener(
     "DOMContentLoaded",
     () => {
