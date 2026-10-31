@@ -627,3 +627,54 @@ header h1 { font-size: 1.3rem; font-weight: 600; }
 @media (max-width: 768px) and (orientation: landscape) {
   .auth-overlay { align-items: flex-start; }
 }
+
+
+/* BusPass — mapas, trajetos e suporte responsivos */
+.container { min-height: 0; }
+.sidebar { width: clamp(320px, 31vw, 410px); min-width: 0; }
+#map { min-width: 0; z-index: 0; }
+.line-chip { min-height: 34px; display: inline-flex; align-items: center; justify-content: center; }
+.line-chip:focus-visible, .point-line-button:focus-visible, .route-card:focus-visible, .support-image:focus-visible { outline: 3px solid #ffb300; outline-offset: 3px; }
+.point-line-button { appearance:none; font:inherit; font-size:.75rem; border:2px solid transparent; cursor:pointer; padding:3px 10px; }
+.point-line-button:hover, .point-line-button.is-selected { border-color:#0d47a1; box-shadow:0 0 0 2px #bbdefb; }
+.route-card { appearance:none; width:100%; display:block; text-align:left; font:inherit; white-space:normal; line-height:1.4; background:#fafbfc; border:1px solid #dfe9f2; border-left:4px solid #1e88e5; border-radius:9px; padding:12px; margin-bottom:9px; }
+.route-card.transfer { border-left-color:#fb8c00; }
+.route-card:hover { background:#edf5ff; }
+.route-card.is-selected { background:#eaf4ff; border-color:#1976d2; box-shadow:0 0 0 2px rgba(25,118,210,.16); }
+.route-card-title, .route-card-line, .route-card-stops, .route-card-hint { display:block; }
+.route-card-hint { margin-top:8px; color:#1565c0; font-size:.73rem; font-weight:600; }
+.route-disclaimer { font-size:.75rem; line-height:1.5; color:#315672; background:#edf5ff; padding:10px; border-radius:8px; margin-bottom:12px; }
+.route-group-title { font-size:.92rem; margin:14px 0 8px; color:#193a58; }
+.route-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.route-actions .btn { flex:1 1 125px; min-height:40px; }
+.support-image { cursor:zoom-in; transition:transform .18s ease,box-shadow .18s ease; }
+.support-image:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(21,101,192,.25); }
+.support-hover-preview { display:none; position:fixed; z-index:3900; top:50%; left:50%; transform:translate(-50%,-50%); width:min(690px,74vw); max-height:84vh; padding:12px; background:#fff; border:1px solid #d0e2f2; border-radius:16px; box-shadow:0 16px 60px rgba(2,28,50,.34); pointer-events:none; }
+.support-hover-preview.is-visible { display:block; }
+.support-hover-preview img { width:100%; max-height:calc(84vh - 24px); object-fit:contain; display:block; }
+.support-map-modal[hidden] { display:none !important; }
+.support-map-modal { position:fixed; inset:0; z-index:5500; display:flex; align-items:center; justify-content:center; padding:64px 16px 24px; background:rgba(6,17,33,.92); }
+.support-map-modal img { max-width:min(100%,1180px); max-height:100%; object-fit:contain; border-radius:6px; }
+.support-modal-close { position:absolute; right:18px; top:14px; font:inherit; font-weight:700; color:#0d47a1; border:none; border-radius:8px; padding:9px 15px; background:#fff; cursor:pointer; }
+.support-modal-open { overflow:hidden; }
+@media (max-width:1024px) and (min-width:769px) { .sidebar { width:335px; } }
+@media (max-width:768px) {
+  html,body { width:100%; overflow-x:hidden; }
+  body { height:100vh; height:100dvh; min-height:0; }
+  header { flex:0 0 auto; }
+  .tabs { flex-wrap:wrap; }
+  .tab-btn { min-height:38px; flex:1 1 calc(50% - 6px); }
+  .container { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+  .sidebar { width:100%; flex:0 1 auto; max-height:min(48vh,490px); max-height:min(48dvh,490px); overflow-x:hidden; overflow-y:auto; }
+  #map { width:100%; height:auto; min-height:260px; flex:1 1 auto; }
+  .line-chip { min-height:38px; padding:6px 12px; }
+  .route-card { padding:12px; }
+  .support-hover-preview { display:none !important; }
+  .support-map-modal { padding:70px 10px 15px; }
+}
+@media (max-width:400px) {
+  .tab-btn { font-size:.78rem; }
+  .sidebar { max-height:45dvh; }
+  #map { min-height:225px; }
+}
+@media (prefers-reduced-motion:reduce) { .support-image { transition:none; } }
