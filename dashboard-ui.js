@@ -3,12 +3,6 @@
 (() => {
   "use strict";
 
-  const PAGE_LABELS = {
-    map: ["Página Inicial", "Gestão e uso do transporte público em um só lugar."],
-    card: ["Meu cartão", "Consulte seu saldo, suas recargas e o histórico de uso."],
-    route: ["Calcular rota", "Planeje seu trajeto pelos pontos de São Carlos."],
-    support: ["Suporte", "Encontre orientações e informações sobre o BusPass."]
-  };
 
   function invalidateLeaflet() {
     const map = window.BusPassInternals?.state?.map;
@@ -19,12 +13,7 @@
   function syncActiveView() {
     const selected = document.querySelector("body > header .tab-btn.active");
     const view = selected?.dataset.view || "map";
-    const [title, subtitle] = PAGE_LABELS[view] || PAGE_LABELS.map;
     document.body.dataset.buspassView = view;
-    const titleNode = document.querySelector("#workspaceTitle");
-    const subtitleNode = document.querySelector("#workspaceSubtitle");
-    if (titleNode) titleNode.textContent = title;
-    if (subtitleNode) subtitleNode.textContent = subtitle;
     invalidateLeaflet();
   }
 
