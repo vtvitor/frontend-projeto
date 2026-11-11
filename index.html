@@ -6,14 +6,13 @@
   <title>BUSPASS - Ônibus São Carlos - SP</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="dashboard-theme.css" />
 </head>
 <body>
   <header>
     <div class="header-top">
       <div class="header-title">
-        <h1><span class="brand-icon" aria-hidden="true">🚌</span> Bus<span class="brand-highlight">Pass</span></h1>
-        <p class="subtitle">Mobilidade urbana inteligente</p>
+        <h1>🚌 BUSPASS</h1>
+        <p class="subtitle">Ônibus São Carlos - SP — Pontos e horários</p>
       </div>
       <div class="user-chip" id="userChip" style="display:none">
         <span class="user-chip-avatar" id="userAvatar">👤</span>
@@ -22,11 +21,10 @@
       </div>
     </div>
     <nav class="tabs" aria-label="Navegação principal">
-      <button type="button" class="tab-btn active" data-view="map">⌂ <span>Página Inicial</span></button>
-      <button type="button" class="tab-btn" data-view="card">▣ <span>Meu cartão</span></button>
-      <button type="button" class="nav-shortcut" id="linesShortcut">▤ <span>Linhas de ônibus</span></button>
-      <button type="button" class="tab-btn" data-view="route">◇ <span>Calcular rota</span></button>
-      <button type="button" class="tab-btn" data-view="support">ⓘ <span>Suporte</span></button>
+      <button type="button" class="tab-btn active" data-view="map">🗺️ Mapa</button>
+      <button type="button" class="tab-btn" data-view="card">💳 Cartão</button>
+      <button type="button" class="tab-btn" data-view="route">🛣️ Trajetos</button>
+      <button type="button" class="tab-btn" data-view="support">💡 Suporte</button>
     </nav>
   </header>
 
@@ -96,9 +94,8 @@
   </div>
 
 
-  <main class="container" id="mainContent">
+  <div class="container">
     <aside class="sidebar" id="mapSidebar">
-      <div class="map-sidebar-title"><span class="map-sidebar-kicker">EXPLORAR A CIDADE</span><h2>Linhas e pontos</h2><p>Encontre os ônibus e pontos próximos de você.</p></div>
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="🔎 Buscar linha, bairro..." />
       </div>
@@ -245,14 +242,13 @@
     </aside>
 
     <div id="map"></div>
-  </main>
+  </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="data.js"></script>
   <script src="api.js"></script>
   <script src="script.js"></script>
   <script src="enhancements.js"></script>
-  <script src="dashboard-ui.js"></script>
 </body>
 </html>
 
