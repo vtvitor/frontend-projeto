@@ -523,3 +523,54 @@ body > header .nav-shortcut:focus-visible,
   body > header .tab-btn,
   body > header .nav-shortcut { transition: none; }
 }
+
+/* Cabeçalho compacto: evita repetir o menu lateral e amplia a área do mapa. */
+body > .container {
+  gap: 13px;
+  padding-top: 15px;
+  padding-bottom: 16px;
+}
+.dashboard-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 46px;
+  padding: 0 1px 10px;
+  border-bottom: 1px solid rgba(27, 63, 91, .11);
+}
+.dashboard-heading .eyebrow { display: none; }
+.dashboard-heading h2 {
+  font-size: clamp(1.3rem, 1.8vw, 1.6rem);
+  line-height: 1.15;
+  letter-spacing: -.035em;
+}
+.dashboard-heading p:last-child {
+  margin-top: 3px;
+  font-size: .78rem;
+  line-height: 1.4;
+}
+.city-pill {
+  padding: 7px 11px;
+  margin-top: 0;
+  font-size: .73rem;
+  box-shadow: none;
+}
+@media (max-width: 780px) {
+  body > .container {
+    padding: 13px 13px 20px;
+    gap: 12px;
+  }
+  .dashboard-intro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 10px;
+  }
+  .dashboard-heading h2 { font-size: 1.4rem; }
+}
+@media (max-width: 480px) {
+  .dashboard-heading h2 { font-size: 1.32rem; }
+  .dashboard-heading p:last-child { font-size: .75rem; }
+  .city-pill { display: none; }
+}
