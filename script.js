@@ -950,6 +950,17 @@
   }
 
   function buildPointPanel(point) {
+    if (point.type === "osm_stop") {
+      const nodeUrl = "https://www.openstreetmap.org/node/" + encodeURIComponent(point.osmId);
+      return `
+        <button type="button" class="btn btn-soft detail-back-button" data-action="back-to-search">Voltar</button>
+        <div class="point-name">${escapeHtml(point.name)}</div>
+        <div class="point-address">📍 ${escapeHtml(point.address)}</div>
+        <p class="osm-stop-warning">Parada identificada por colaboradores do OpenStreetMap. As linhas e os horários ainda não foram verificados pelo BusPass.</p>
+        <a href="${nodeUrl}" target="_blank" rel="noopener noreferrer">Conferir a parada no OpenStreetMap</a>
+      `;
+    }
+
     const lines = (point.lines || [])
       .map(line => {
         const info = BUS_DATA.lines[line];
@@ -3384,6 +3395,7 @@
       MapManager.init();
       MapManager.renderMarkers();
       FilterManager.renderLines();
+      window.BusPassAdditionalStops?.load();
     }
 
     initSearch();
@@ -3401,7 +3413,7 @@
     }
   }
 
-  window.BusPassInternals = { state, MapManager, RoutePlanner, RouteGeometry, FilterManager, getPointById, pointLabel, escapeHtml };
+  window.BusPassInternals = { state, MapManager, RoutePlanner, RouteGeometry, FilterManager, getPointById, pointLabel, escapeHtml, selectPoint };
 
   document.addEventListener(
     "DOMContentLoaded",
