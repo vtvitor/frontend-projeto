@@ -727,3 +727,29 @@ header {
   line-height: 1.45;
 }
 .osm-stop-detail { display: inline-block; margin: 8px 0 0 10px; }
+
+/* Integração demonstrativa dos pontos OSM às rotas existentes */
+.osm-nearby-note {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-left: 3px solid #0a849b;
+  border-radius: 5px;
+  background: #eef8fb;
+  color: #284957;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.osm-nearby-note p { margin: 5px 0 0; }
+.osm-source-links {
+  margin-top: 14px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.osm-source-links a { color: #075ea4; text-decoration: underline; }
+.route-card-walking {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.75rem;
+  color: #49616d;
+}
+.route-disclaimer a { text-decoration: underline; }
