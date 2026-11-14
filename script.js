@@ -1806,20 +1806,9 @@
     },
 
     maskCpf(cpf) {
-      const digits =
-        this.onlyDigits(cpf);
-
-
-      if (digits.length !== 11) {
-        return cpf;
-      }
-
-
-      return (
-        `${digits.slice(0, 3)}.` +
-        `${digits.slice(3, 6)}.` +
-        `***.**-${digits.slice(10)}`
-      );
+      const digits = this.onlyDigits(cpf);
+      if (digits.length !== 11) return "não informado";
+      return "***.***.***-" + digits.slice(-2);
     },
 
     formatCpfInput(value) {
@@ -2154,63 +2143,96 @@
       };
     },
 
-    bloquear(id) {
-      if (this.isBlocked({ id })) {
-        return true;
-      }
+    async bloquear(id) {
+      if (this.isBlocked({ id })) return true;
 
       const session = Auth.getSession();
+      if (!session || !session.id) {
+        alert("Faça login para bloquear o cartão.");
+        return false;
+      }
 
-      // Abre o modal de bloqueio em vez de usar prompt()
       const modal = $("#blockCardModal");
       const passwordInput = $("#blockCardPassword");
       const confirmBtn = $("#confirmBlockBtn");
       const cancelBtn = $("#cancelBlockBtn");
       const closeBtn = $("#closeBlockModal");
 
-      if (!modal) return false;
+      if (!modal || !passwordInput || !confirmBtn || !cancelBtn || !closeBtn) return false;
 
       modal.style.display = "flex";
       passwordInput.value = "";
       passwordInput.focus();
 
       return new Promise((resolve) => {
+        let submitting = false;
+
         const cleanup = () => {
           modal.style.display = "none";
+          passwordInput.value = "";
+          confirmBtn.disabled = false;
+          cancelBtn.disabled = false;
+          closeBtn.disabled = false;
           confirmBtn.removeEventListener("click", handleConfirm);
           cancelBtn.removeEventListener("click", handleCancel);
           closeBtn.removeEventListener("click", handleCancel);
+          passwordInput.removeEventListener("keydown", handleKeydown);
         };
 
         const handleCancel = () => {
+          if (submitting) return;
           cleanup();
           resolve(false);
         };
 
-        const handleConfirm = () => {
-          const password = passwordInput.value;
+        const handleConfirm = async () => {
+          if (submitting) return;
 
-          if (!password || password.length < 6) {
-            alert("Senha inválida. A senha deve ter no mínimo 6 caracteres.");
+          const senha = passwordInput.value;
+          if (!senha || senha.length < 6) {
+            alert("Informe sua senha de acesso (mínimo de 6 caracteres).");
             return;
           }
 
-          const users = Auth.loadUsers();
-          const user = users.find(u => u.id === session?.id || u.email === session?.email);
+          submitting = true;
+          confirmBtn.disabled = true;
+          cancelBtn.disabled = true;
+          closeBtn.disabled = true;
 
-          if (!user || user.senha !== password) {
-            alert("Senha incorreta. O cartão não foi bloqueado.");
-            return;
+          try {
+            const result = await API.bloquearCartao(id, session.id, senha);
+            if (result?.sucesso !== true) {
+              alert(result?.mensagem || "Não foi possível bloquear o cartão.");
+              return;
+            }
+
+            this.markBlocked(id);
+            cleanup();
+            resolve(true);
+          } catch (error) {
+            console.warn("Erro ao bloquear cartão:", error.message);
+            alert("Não foi possível bloquear o cartão. Tente novamente.");
+          } finally {
+            submitting = false;
+            confirmBtn.disabled = false;
+            cancelBtn.disabled = false;
+            closeBtn.disabled = false;
           }
+        };
 
-          this.markBlocked(id);
-          cleanup();
-          resolve(true);
+        const handleKeydown = (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            handleConfirm();
+          } else if (event.key === "Escape") {
+            handleCancel();
+          }
         };
 
         confirmBtn.addEventListener("click", handleConfirm);
         cancelBtn.addEventListener("click", handleCancel);
         closeBtn.addEventListener("click", handleCancel);
+        passwordInput.addEventListener("keydown", handleKeydown);
       });
     },
 
@@ -2262,11 +2284,15 @@
         return;
       }
 
+      const session = Auth.getSession();
+
       container.innerHTML =
         cards
           .map(card => {
 
             const blocked = this.isBlocked(card);
+            const nomeExibido = card.nome || session?.nome || "Titular não informado";
+            const cpfExibido = card.cpf || session?.cpf || "";
 
             const quick = blocked
               ? ""
@@ -2299,11 +2325,11 @@
                   <div>
 
                     <div class="card-item-name">
-                      ${escapeHtml(card.nome || "")}
+                      ${escapeHtml(nomeExibido)}
                     </div>
 
                     <div class="card-item-cpf">
-                      CPF ${this.maskCpf(card.cpf)}
+                      CPF ${this.maskCpf(cpfExibido)}
                     </div>
 
                   </div>
@@ -2438,7 +2464,7 @@
 
           if (blockBtn) {
 
-            const blocked = self.bloquear(
+            const blocked = await self.bloquear(
               blockBtn.dataset.blockId
             );
 
