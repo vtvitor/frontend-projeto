@@ -59,6 +59,33 @@ const API = (() => {
       return await chamar("/cartoes/" + id, { method: "DELETE" });
     },
 
+    async bloquearCartao(id, usuarioId, senha) {
+      try {
+        const res = await fetch(BASE + "/cartoes/" + encodeURIComponent(id) + "/bloquear", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ usuarioId, senha })
+        });
+
+        if (res.ok) return await res.json();
+
+        if (res.status === 401) {
+          return { sucesso: false, mensagem: "Senha incorreta. O cartão não foi bloqueado." };
+        }
+        if (res.status === 403) {
+          return { sucesso: false, mensagem: "Este cartão não pertence à sua conta." };
+        }
+        if (res.status === 404) {
+          return { sucesso: false, mensagem: "Cartão não encontrado no banco de dados." };
+        }
+
+        return { sucesso: false, mensagem: "Não foi possível bloquear o cartão. Tente novamente." };
+      } catch (error) {
+        console.warn("Falha de conexão ao bloquear cartão:", error.message);
+        return { sucesso: false, mensagem: "Sem conexão com o servidor. Cartão não bloqueado." };
+      }
+    },
+
     async listarLinhas() {
       return await chamar("/linhas");
     },
