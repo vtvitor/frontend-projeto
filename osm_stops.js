@@ -157,7 +157,7 @@
   async function load() {
     if (started) return;
     const internals = window.BusPassInternals;
-    if (!internals?.state?.map || !window.BUS_DATA) return;
+    if (!internals?.state?.map || typeof BUS_DATA === "undefined") return;
     started = true;
 
     const cache = readCache();
