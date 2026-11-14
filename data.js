@@ -849,6 +849,103 @@ const BUS_DATA = {
   ]
 };
 
+
+/*
+ * Integração demonstrativa das paradas OSM às 7 linhas que já existem no BusPass.
+ * IMPORTANTE: proximidade geográfica NÃO comprova que uma linha atende a parada.
+ * Dados de linhas e horários precisam de confirmação na SOU São Carlos.
+ */
+function vincularParadasOsmAoMapa() {
+  const linhasOriginais = Object.fromEntries(
+    Object.entries(BUS_DATA.routes).map(([line, ids]) => [line, ids.slice()])
+  );
+  const originais = BUS_DATA.points.filter(p => p.type !== "osm_stop");
+  const porId = new Map(originais.map(p => [p.id, p]));
+  const idsEmRotas = new Set(Object.values(linhasOriginais).flat());
+  const referencias = originais.filter(p => idsEmRotas.has(p.id));
+  const pendentes = Object.fromEntries(
+    Object.keys(linhasOriginais).map(line => [line, []])
+  );
+
+  function distancia(a, b) {
+    const latRad = (a.lat + b.lat) * Math.PI / 360;
+    const dx = (a.lng - b.lng) * 111320 * Math.cos(latRad);
+    const dy = (a.lat - b.lat) * 111320;
+    return Math.hypot(dx, dy);
+  }
+
+  function projetarNaRota(ponto, a, b) {
+    const rad = (ponto.lat + a.lat + b.lat) * Math.PI / 540;
+    const escala = Math.cos(rad) * 111320;
+    const x = ponto.lng * escala, y = ponto.lat * 111320;
+    const ax = a.lng * escala, ay = a.lat * 111320;
+    const vx = (b.lng - a.lng) * escala, vy = (b.lat - a.lat) * 111320;
+    const t = Math.max(0, Math.min(1,
+      ((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy || 1)
+    ));
+    return { dist: Math.hypot(x - ax - t * vx, y - ay - t * vy), t };
+  }
+
+  for (const ponto of BUS_DATA.points.filter(p => p.type === "osm_stop")) {
+    const opcoes = [];
+    for (const [line, ids] of Object.entries(linhasOriginais)) {
+      let melhor = { line, dist: Infinity, index: -1, t: 0 };
+      for (let i = 0; i < ids.length - 1; i++) {
+        const a = porId.get(ids[i]), b = porId.get(ids[i + 1]);
+        if (!a || !b) continue;
+        const projeção = projetarNaRota(ponto, a, b);
+        if (projeção.dist < melhor.dist) {
+          melhor = { line, dist: projeção.dist, index: i, t: projeção.t };
+        }
+      }
+      if (melhor.index >= 0) opcoes.push(melhor);
+    }
+    opcoes.sort((a, b) => a.dist - b.dist);
+
+    // No máximo duas linhas sugeridas, junto dos trajetos já cadastrados.
+    // A distância de 350 m é um critério cartográfico, NÃO validação operacional.
+    const primeira = opcoes[0]?.dist ?? Infinity;
+    const provaveis = opcoes.filter(
+      x => x.dist <= 350 && x.dist <= primeira + 120
+    ).slice(0, 2);
+
+    ponto.lines = provaveis.map(m => m.line);
+    ponto.linhasEstimadas = ponto.lines.slice();
+    ponto.vinculoEstimado = true;
+    ponto.distanciaRotaMetros = Math.round(primeira);
+    ponto.grauConfianca = provaveis.length ? "aproximacao_cartografica" : "nao_identificado";
+
+    for (const m of provaveis) {
+      pendentes[m.line].push({ id: ponto.id, index: m.index, t: m.t });
+    }
+
+    const maisProximo = referencias.reduce((melhor, atual) => {
+      const metros = distancia(ponto, atual);
+      return !melhor || metros < melhor.metros
+        ? { id: atual.id, metros } : melhor;
+    }, null);
+
+    ponto.pontoReferenciaId = maisProximo?.id || null;
+    ponto.distanciaReferenciaMetros = Math.round(maisProximo?.metros ?? Infinity);
+  }
+
+  for (const [line, ids] of Object.entries(linhasOriginais)) {
+    const additions = pendentes[line].sort(
+      (a, b) => a.index - b.index || a.t - b.t
+    );
+    const novaRota = [];
+    for (let i = 0; i < ids.length; i++) {
+      novaRota.push(ids[i]);
+      for (const extra of additions.filter(p => p.index === i)) {
+        novaRota.push(extra.id);
+      }
+    }
+    BUS_DATA.routes[line] = novaRota;
+  }
+}
+vincularParadasOsmAoMapa();
+
+
 function getScheduleForLine(lineNumber) {
   return BUS_DATA.defaultSchedule[lineNumber] || null;
 }
