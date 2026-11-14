@@ -375,20 +375,32 @@
 
     createMarkerIcon(point) {
       const terminal = point.type === "terminal";
+      const osmStop = point.type === "osm_stop";
 
       return L.divIcon({
         className: "",
         html: `
-          <div class="bus-marker${terminal ? " terminal" : ""}">
+          <div class="bus-marker${terminal ? " terminal" : ""}${osmStop ? " osm-stop-marker" : ""}">
             ${terminal ? "T" : "•"}
           </div>
         `,
-        iconSize: terminal ? [38, 38] : [32, 32],
-        iconAnchor: terminal ? [19, 19] : [16, 16]
+        iconSize: terminal ? [38, 38] : (osmStop ? [23, 23] : [32, 32]),
+        iconAnchor: terminal ? [19, 19] : (osmStop ? [11, 11] : [16, 16])
       });
     },
 
     buildPopup(point) {
+      if (point.type === "osm_stop") {
+        const url = "https://www.openstreetmap.org/" + encodeURIComponent(point.osmType) + "/" + encodeURIComponent(point.osmId);
+        return `
+          <h4>${escapeHtml(point.name)}</h4>
+          <div class="popup-address">${escapeHtml(point.address)}</div>
+          <p class="osm-stop-warning">Parada mapeada no OpenStreetMap. Linhas e horários não verificados.</p>
+          <a href="${url}" target="_blank" rel="noopener noreferrer">Ver localização no OpenStreetMap</a>
+          <a href="#" class="popup-link" data-point-id="${escapeHtml(point.id)}">Ver detalhes</a>
+        `;
+      }
+
       const tags = (point.lines || [])
         .map(line => {
           const info = BUS_DATA.lines[line];
@@ -1668,7 +1680,8 @@
 
 
     const points =
-      [...BUS_DATA.points]
+      BUS_DATA.points
+        .filter(point => point.type !== "osm_stop")
         .sort((a, b) =>
           a.name.localeCompare(
             b.name,
@@ -3395,7 +3408,11 @@
       MapManager.init();
       MapManager.renderMarkers();
       FilterManager.renderLines();
-      window.BusPassAdditionalStops?.load();
+      const status = $("#osmStopStatus");
+      if (status) {
+        const extras = BUS_DATA.points.filter(point => point.type === "osm_stop").length;
+        status.textContent = extras + " paradas adicionais de São Carlos já carregadas no mapa (OpenStreetMap; linhas não verificadas).";
+      }
     }
 
     initSearch();
