@@ -976,15 +976,10 @@
         <button type="button" class="btn btn-soft detail-back-button" data-action="back-to-search">Voltar</button>
         <div class="point-name">${escapeHtml(point.name)}</div>
         <div class="point-address">📍 ${escapeHtml(point.address)}</div>
-        <p class="osm-stop-warning">
-          <strong>Informações estimadas para demonstração.</strong>
-          Linhas relacionadas pela proximidade com os trajetos cadastrados no BusPass, sem confirmação da operação.
-          Os horários são tabelas de referência do projeto e <strong>não indicam a chegada do ônibus nesta parada</strong>.
-        </p>
-        <h3>${linked ? "🚌 Linhas sugeridas nesta região (não confirmadas)" : "🚌 Linhas do ponto de referência (não desta parada)"}</h3>
+        <h3>🚌 Linhas</h3>
         <div>${lineTags}</div>
         ${referencia}
-        ${linhasExibidas.length ? '<h3 style="margin-top:18px">⏰ Grade demonstrativa da linha (não é horário de chegada nesta parada)</h3>' : ''}
+        ${linhasExibidas.length ? '<h3 style="margin-top:18px">⏰ Horários</h3>' : ''}
         ${horarios}
         <p class="osm-source-links">
           <a href="https://soutransportes.com.br/sao-carlos/linhas-e-horarios/" target="_blank" rel="noopener noreferrer">Conferir linhas e horários oficiais na SOU São Carlos</a>
