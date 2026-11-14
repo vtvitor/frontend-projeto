@@ -703,3 +703,27 @@ header {
 @media (prefers-reduced-motion: reduce) {
   .tab-btn, .line-chip { transition: none; }
 }
+
+/* Paradas adicionais mapeadas pela comunidade OpenStreetMap */
+.osm-stop-status {
+  margin: 10px 0 0;
+  color: #386277;
+  font-size: 0.73rem;
+  line-height: 1.4;
+}
+.bus-marker.osm-stop-marker {
+  width: 19px;
+  height: 19px;
+  background: #047c91;
+  border: 2px solid #fff;
+  font-size: 1rem;
+  line-height: 1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .26);
+}
+.osm-stop-warning {
+  color: #4b6472;
+  font-size: 0.82rem;
+  margin: 8px 0;
+  line-height: 1.45;
+}
+.osm-stop-detail { display: inline-block; margin: 8px 0 0 10px; }
