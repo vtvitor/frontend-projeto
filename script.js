@@ -970,13 +970,16 @@
       const osmUrl = "https://www.openstreetmap.org/" + encodeURIComponent(point.osmType) + "/" + encodeURIComponent(point.osmId);
       const pontoReferencia = getPointById(point.pontoReferenciaId);
       const linked = (point.lines || []).length > 0;
-
-      const lineTags = linked
-        ? point.lines.map(line => '<span class="line-tag" title="Associação estimada">' + escapeHtml(line) + '</span>').join(" ")
-        : '<span class="osm-stop-warning">Não há linha identificada diretamente nesta parada.</span>';
-      const horarios = linked
-        ? point.lines.map(buildScheduleForLine).join("")
-        : "";
+      const referenciaAcessivel = !linked && pontoReferencia &&
+        point.distanciaReferenciaMetros <= 1500;
+      const linhasReferencia = referenciaAcessivel
+        ? (pontoReferencia.lines || []).filter(line => BUS_DATA.defaultSchedule[line])
+        : [];
+      const linhasExibidas = linked ? point.lines : linhasReferencia;
+      const lineTags = linhasExibidas.length
+        ? linhasExibidas.map(line => '<span class="line-tag" title="Informação estimada">' + escapeHtml(line) + '</span>').join(" ")
+        : '<span class="osm-stop-warning">Nenhuma linha confirmada nesta parada.</span>';
+      const horarios = linhasExibidas.map(buildScheduleForLine).join("");
       const referencia = !linked && pontoReferencia
         ? `<div class="osm-nearby-note">
              <strong>Ponto de referência mais próximo na rede demonstrativa:</strong>
@@ -994,10 +997,10 @@
           Linhas relacionadas pela proximidade com os trajetos cadastrados no BusPass, sem confirmação da operação.
           Os horários são tabelas de referência do projeto e <strong>não indicam a chegada do ônibus nesta parada</strong>.
         </p>
-        <h3>🚌 Linhas sugeridas (não confirmadas)</h3>
+        <h3>${linked ? "🚌 Linhas sugeridas nesta região (não confirmadas)" : "🚌 Linhas do ponto de referência (não desta parada)"}</h3>
         <div>${lineTags}</div>
         ${referencia}
-        ${linked ? '<h3 style="margin-top:18px">⏰ Horários demonstrativos da linha</h3>' : ''}
+        ${linhasExibidas.length ? '<h3 style="margin-top:18px">⏰ Grade demonstrativa da linha (não é horário de chegada nesta parada)</h3>' : ''}
         ${horarios}
         <p class="osm-source-links">
           <a href="${osmUrl}" target="_blank" rel="noopener noreferrer">Ver ponto no OpenStreetMap</a>
