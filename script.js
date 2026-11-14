@@ -375,41 +375,26 @@
 
     createMarkerIcon(point) {
       const terminal = point.type === "terminal";
-      const osmStop = point.type === "osm_stop";
-
       return L.divIcon({
         className: "",
         html: `
-          <div class="bus-marker${terminal ? " terminal" : ""}${osmStop ? " osm-stop-marker" : ""}">
+          <div class="bus-marker${terminal ? " terminal" : ""}">
             ${terminal ? "T" : "•"}
           </div>
         `,
-        iconSize: terminal ? [38, 38] : (osmStop ? [23, 23] : [32, 32]),
-        iconAnchor: terminal ? [19, 19] : (osmStop ? [11, 11] : [16, 16])
+        iconSize: terminal ? [38, 38] : [32, 32],
+        iconAnchor: terminal ? [19, 19] : [16, 16]
       });
     },
 
     buildPopup(point) {
-      if (point.type === "osm_stop") {
-        const url = "https://www.openstreetmap.org/" + encodeURIComponent(point.osmType) + "/" + encodeURIComponent(point.osmId);
-        const lineLabels = point.lines.length
-          ? point.lines.map(line => '<span class="line-tag">' + escapeHtml(line) + '</span>').join(" ")
-          : "Nenhuma linha identificada na rota cadastrada";
-        return `
-          <h4>${escapeHtml(point.name)}</h4>
-          <div class="popup-address">${escapeHtml(point.address)}</div>
-          <p class="osm-stop-warning"><strong>Linhas sugeridas por proximidade (não confirmadas):</strong> ${lineLabels}<br>
-          Horários e trajetos demonstrativos, não informações operacionais oficiais.</p>
-          <a href="${url}" target="_blank" rel="noopener noreferrer">Ver no OpenStreetMap</a>
-          <a href="#" class="popup-link" data-point-id="${escapeHtml(point.id)}">Ver detalhes</a>
-        `;
-      }
-
+      const isEstimated = point.type === "osm_stop";
       const tags = (point.lines || [])
         .map(line => {
           const info = BUS_DATA.lines[line];
           return `
-            <span class="line-tag ${info?.color || ""}">
+            <span class="line-tag ${info?.color || ""}"
+              ${isEstimated ? 'title="Linha estimada por proximidade; não confirmada pela operadora"' : ""}>
               ${escapeHtml(line)}
             </span>
           `;
@@ -423,7 +408,7 @@
         </div>
         <div>
           <strong>Linhas:</strong>
-          ${tags}
+          ${tags || (isEstimated ? "A confirmar" : "Não informadas")}
         </div>
         <a
           href="#"
@@ -967,7 +952,6 @@
 
   function buildPointPanel(point) {
     if (point.type === "osm_stop") {
-      const osmUrl = "https://www.openstreetmap.org/" + encodeURIComponent(point.osmType) + "/" + encodeURIComponent(point.osmId);
       const pontoReferencia = getPointById(point.pontoReferenciaId);
       const linked = (point.lines || []).length > 0;
       const referenciaAcessivel = !linked && pontoReferencia &&
@@ -1003,8 +987,7 @@
         ${linhasExibidas.length ? '<h3 style="margin-top:18px">⏰ Grade demonstrativa da linha (não é horário de chegada nesta parada)</h3>' : ''}
         ${horarios}
         <p class="osm-source-links">
-          <a href="${osmUrl}" target="_blank" rel="noopener noreferrer">Ver ponto no OpenStreetMap</a>
-          · <a href="https://soutransportes.com.br/sao-carlos/linhas-e-horarios/" target="_blank" rel="noopener noreferrer">Conferir linhas e horários oficiais na SOU São Carlos</a>
+          <a href="https://soutransportes.com.br/sao-carlos/linhas-e-horarios/" target="_blank" rel="noopener noreferrer">Conferir linhas e horários oficiais na SOU São Carlos</a>
         </p>
       `;
     }
