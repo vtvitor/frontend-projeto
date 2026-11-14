@@ -927,6 +927,49 @@ function vincularParadasOsmAoMapa() {
 
     ponto.pontoReferenciaId = maisProximo?.id || null;
     ponto.distanciaReferenciaMetros = Math.round(maisProximo?.metros ?? Infinity);
+
+    // Identificação amigável dos pontos OSM sem nome: usa apenas uma referência
+    // geográfica próxima já existente no projeto, sem fingir saber o bairro exato.
+    const referenciaNome = originais.reduce((melhor, atual) => {
+      const metros = distancia(ponto, atual);
+      return !melhor || metros < melhor.metros
+        ? { ponto: atual, metros } : melhor;
+    }, null);
+    const semNome = /^Parada de ônibus OSM\s+\d+$/i.test(ponto.name);
+    const enderecoSemDados = ponto.address === "Localização registrada no OpenStreetMap";
+    const ref = referenciaNome?.ponto;
+    const distanciaRef = referenciaNome?.metros ?? Infinity;
+
+    // O trecho final após " - " nos endereços já cadastrados indica a região
+    // descrita no próprio catálogo, mas não determina o bairro deste novo ponto.
+    const areaRef = ref?.address?.includes(" - ")
+      ? ref.address.split(" - ").at(-1).trim()
+      : (ref?.name?.match(/^(?:Jd\.|Jardim|Vila|Cidade Aracy|São Carlos III|Parque|Residencial)\s+.+/i)?.[0]
+          ?.replace(/\s+(?:I|II)$/i, "") || "");
+
+    ponto.nomeOsmOriginal = ponto.name;
+    ponto.bairroEstimado = distanciaRef <= 650 && areaRef
+      ? areaRef : null;
+    ponto.distanciaBairroReferenciaMetros = Math.round(distanciaRef);
+
+    if (semNome) {
+      if (ponto.bairroEstimado) {
+        ponto.name = "Ponto próximo ao " + ponto.bairroEstimado;
+      } else if (distanciaRef <= 650 && ref?.name) {
+        ponto.name = "Ponto próximo a " + ref.name.trim();
+      } else {
+        ponto.name = "Ponto de ônibus";
+      }
+    }
+    if (enderecoSemDados) {
+      ponto.address = ponto.bairroEstimado
+        ? "Região próxima a " + ponto.bairroEstimado
+        : (distanciaRef <= 650 && ref?.name
+            ? "Próximo a " + ref.name.trim()
+            : "Bairro não identificado");
+    } else if (ponto.bairroEstimado) {
+      ponto.address += " · Região próxima a " + ponto.bairroEstimado;
+    }
   }
 
   for (const [line, ids] of Object.entries(linhasOriginais)) {
