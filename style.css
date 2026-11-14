@@ -518,10 +518,10 @@ header h1 { font-size: 1.3rem; font-weight: 600; }
 .popup-address { color: #607d8b; font-size: 0.78rem; margin-bottom: 6px; }
 .popup-link {
   display: inline-block; margin-top: 4px; padding: 3px 9px;
-  background: #ffffff; color: #fff; border-radius: 4px;
+  background: transparent; color: #1565c0; border-radius: 4px;
   text-decoration: none; font-size: 0.78rem;
 }
-.popup-link:hover { background: #ffffff; }
+.popup-link:hover { background: #eaf4ff; text-decoration: underline; }
 
 .sidebar::-webkit-scrollbar { width: 6px; }
 .sidebar::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -710,15 +710,6 @@ header {
   color: #386277;
   font-size: 0.73rem;
   line-height: 1.4;
-}
-.bus-marker.osm-stop-marker {
-  width: 19px;
-  height: 19px;
-  background: #047c91;
-  border: 2px solid #fff;
-  font-size: 1rem;
-  line-height: 1;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, .26);
 }
 .osm-stop-warning {
   color: #4b6472;
