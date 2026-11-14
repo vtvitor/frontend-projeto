@@ -1,0 +1,35 @@
+name: Importar paradas OSM de São Carlos
+
+on:
+  push:
+    paths:
+      - ".github/workflows/import-osm-stops.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Buscar coordenadas OSM e gerar arquivo local
+        run: python scripts/refresh_bus_stops.py
+      - name: Commitar coordenadas estáticas verificadas
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add osm_stops_static.js
+          if git diff --cached --quiet; then
+            echo "Sem alterações no arquivo estático"
+            exit 0
+          fi
+          git commit -m "Add verified São Carlos OSM bus stop snapshot"
+          git push
