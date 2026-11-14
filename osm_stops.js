@@ -165,6 +165,13 @@
     if (!internals?.state?.map || typeof BUS_DATA === "undefined") return;
     started = true;
 
+    const staticStops = window.BusPassStaticStops;
+    if (Array.isArray(staticStops) && staticStops.length > 0) {
+      const count = registerPoints(staticStops);
+      status(count + " paradas adicionais salvas no projeto (OpenStreetMap; linhas e horários não confirmados)");
+      return;
+    }
+
     const cache = readCache();
     if (cache?.points?.length) {
       const count = registerPoints(cache.points);
