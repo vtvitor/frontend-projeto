@@ -392,11 +392,15 @@
     buildPopup(point) {
       if (point.type === "osm_stop") {
         const url = "https://www.openstreetmap.org/" + encodeURIComponent(point.osmType) + "/" + encodeURIComponent(point.osmId);
+        const lineLabels = point.lines.length
+          ? point.lines.map(line => '<span class="line-tag">' + escapeHtml(line) + '</span>').join(" ")
+          : "Nenhuma linha identificada na rota cadastrada";
         return `
           <h4>${escapeHtml(point.name)}</h4>
           <div class="popup-address">${escapeHtml(point.address)}</div>
-          <p class="osm-stop-warning">Parada mapeada no OpenStreetMap. Linhas e horários não verificados.</p>
-          <a href="${url}" target="_blank" rel="noopener noreferrer">Ver localização no OpenStreetMap</a>
+          <p class="osm-stop-warning"><strong>Linhas sugeridas por proximidade (não confirmadas):</strong> ${lineLabels}<br>
+          Horários e trajetos demonstrativos, não informações operacionais oficiais.</p>
+          <a href="${url}" target="_blank" rel="noopener noreferrer">Ver no OpenStreetMap</a>
           <a href="#" class="popup-link" data-point-id="${escapeHtml(point.id)}">Ver detalhes</a>
         `;
       }
@@ -963,13 +967,42 @@
 
   function buildPointPanel(point) {
     if (point.type === "osm_stop") {
-      const nodeUrl = "https://www.openstreetmap.org/node/" + encodeURIComponent(point.osmId);
+      const osmUrl = "https://www.openstreetmap.org/" + encodeURIComponent(point.osmType) + "/" + encodeURIComponent(point.osmId);
+      const pontoReferencia = getPointById(point.pontoReferenciaId);
+      const linked = (point.lines || []).length > 0;
+
+      const lineTags = linked
+        ? point.lines.map(line => '<span class="line-tag" title="Associação estimada">' + escapeHtml(line) + '</span>').join(" ")
+        : '<span class="osm-stop-warning">Não há linha identificada diretamente nesta parada.</span>';
+      const horarios = linked
+        ? point.lines.map(buildScheduleForLine).join("")
+        : "";
+      const referencia = !linked && pontoReferencia
+        ? `<div class="osm-nearby-note">
+             <strong>Ponto de referência mais próximo na rede demonstrativa:</strong>
+             ${escapeHtml(pontoReferencia.name)} —
+             cerca de ${point.distanciaReferenciaMetros} m em linha reta.
+             <p>Isso não significa que o ônibus passe nesta parada. Para planejar um trajeto, será necessário confirmar o deslocamento até o embarque.</p>
+           </div>`
+        : "";
       return `
         <button type="button" class="btn btn-soft detail-back-button" data-action="back-to-search">Voltar</button>
         <div class="point-name">${escapeHtml(point.name)}</div>
         <div class="point-address">📍 ${escapeHtml(point.address)}</div>
-        <p class="osm-stop-warning">Parada identificada por colaboradores do OpenStreetMap. As linhas e os horários ainda não foram verificados pelo BusPass.</p>
-        <a href="${nodeUrl}" target="_blank" rel="noopener noreferrer">Conferir a parada no OpenStreetMap</a>
+        <p class="osm-stop-warning">
+          <strong>Informações estimadas para demonstração.</strong>
+          Linhas relacionadas pela proximidade com os trajetos cadastrados no BusPass, sem confirmação da operação.
+          Os horários são tabelas de referência do projeto e <strong>não indicam a chegada do ônibus nesta parada</strong>.
+        </p>
+        <h3>🚌 Linhas sugeridas (não confirmadas)</h3>
+        <div>${lineTags}</div>
+        ${referencia}
+        ${linked ? '<h3 style="margin-top:18px">⏰ Horários demonstrativos da linha</h3>' : ''}
+        ${horarios}
+        <p class="osm-source-links">
+          <a href="${osmUrl}" target="_blank" rel="noopener noreferrer">Ver ponto no OpenStreetMap</a>
+          · <a href="https://soutransportes.com.br/sao-carlos/linhas-e-horarios/" target="_blank" rel="noopener noreferrer">Conferir linhas e horários oficiais na SOU São Carlos</a>
+        </p>
       `;
     }
 
@@ -1680,8 +1713,7 @@
 
 
     const points =
-      BUS_DATA.points
-        .filter(point => point.type !== "osm_stop")
+      [...BUS_DATA.points]
         .sort((a, b) =>
           a.name.localeCompare(
             b.name,
@@ -3411,7 +3443,8 @@
       const status = $("#osmStopStatus");
       if (status) {
         const extras = BUS_DATA.points.filter(point => point.type === "osm_stop").length;
-        status.textContent = extras + " paradas adicionais de São Carlos já carregadas no mapa (OpenStreetMap; linhas não verificadas).";
+        const vinculadas = BUS_DATA.points.filter(point => point.type === "osm_stop" && point.lines.length).length;
+        status.textContent = extras + " paradas adicionais: " + vinculadas + " com rotas demonstrativas próximas; " + (extras - vinculadas) + " sem correspondência próxima. Linhas e horários não confirmados.";
       }
     }
 
