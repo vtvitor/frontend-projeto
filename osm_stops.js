@@ -6,7 +6,7 @@
 (() => {
   "use strict";
 
-  const CACHE_KEY = "buspass.osm-stops.v1";
+  const CACHE_KEY = "buspass.osm-stops.v2";
   const CACHE_TTL_MS = 14 * 24 * 60 * 60 * 1000;
   const MAX_EXTRA_STOPS = 220;
   const BOUNDS = [-22.095, -47.965, -21.945, -47.825]; // sul, oeste, norte, leste
@@ -47,14 +47,18 @@
   }
 
   function convertElements(elements) {
-    const internals = window.BusPassInternals;
     const original = BUS_DATA.points;
     const chosen = [];
     const cells = new Set();
     const ids = new Set();
 
     const nodes = elements
-      .filter(item => item.type === "node" &&
+      .map(item => ({
+        ...item,
+        lat: Number.isFinite(item.lat) ? item.lat : item.center?.lat,
+        lon: Number.isFinite(item.lon) ? item.lon : item.center?.lon
+      }))
+      .filter(item => ["node", "way"].includes(item.type) &&
         Number.isFinite(item.id) &&
         Number.isFinite(item.lat) &&
         Number.isFinite(item.lon) &&
@@ -91,7 +95,8 @@
       const address = street || originalName || "Coordenadas registradas no OpenStreetMap";
 
       chosen.push({
-        id: "osm-" + node.id,
+        id: "osm-" + node.type + "-" + node.id,
+        osmType: node.type,
         osmId: node.id,
         name: name.slice(0, 120),
         address: address.slice(0, 180),
@@ -116,7 +121,7 @@
           !Number.isFinite(point.osmId) || !inBounds(point.lat, point.lng) ||
           !/^osm-\d+$/.test(point.id) || state.markers.has(point.id)) continue;
 
-      const osmUrl = "https://www.openstreetmap.org/node/" + point.osmId;
+      const osmUrl = "https://www.openstreetmap.org/" + point.osmType + "/" + point.osmId;
       const html = `
         <h4>${escapeHtml(point.name)}</h4>
         <div class="popup-address">${escapeHtml(point.address)}</div>
@@ -172,19 +177,43 @@
 
     // Uma consulta por navegador a cada 14 dias; nenhuma repetição agressiva.
     const bbox = BOUNDS.join(",");
-    const query = '[out:json][timeout:20];(' +
-      'node["highway"="bus_stop"](' + bbox + ');' +
-      'node["public_transport"="platform"]["bus"="yes"](' + bbox + ');' +
-      ');out body;';
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
+    const query = '[out:json][timeout:22];(' +
+      'nwr["highway"="bus_stop"](' + bbox + ');' +
+      'nwr["public_transport"="platform"]["bus"="yes"](' + bbox + ');' +
+      ');out center;';
 
+    const providers = [
+      "https://overpass.private.coffee/api/interpreter",
+      "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
+    ];
+    let json = null;
+    let lastError = null;
+    for (const endpoint of providers) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 28000);
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          body: new URLSearchParams({ data: query }),
+          signal: controller.signal,
+          referrerPolicy: "strict-origin-when-cross-origin"
+        });
+        if (!response.ok) throw new Error("Overpass HTTP " + response.status);
+        const candidate = await response.json();
+        if (candidate.remark || !Array.isArray(candidate.elements)) {
+          throw new Error("Resposta OSM incompleta");
+        }
+        json = candidate;
+        break;
+      } catch (error) {
+        lastError = error;
+        console.warn("BusPass: fonte OSM indisponível:", endpoint, error.message);
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
     try {
-      const url = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
-      const response = await fetch(url, { signal: controller.signal });
-      if (!response.ok) throw new Error("Overpass HTTP " + response.status);
-      const json = await response.json();
-      if (json.remark || !Array.isArray(json.elements)) throw new Error("Resposta OSM incompleta");
+      if (!json) throw lastError || new Error("Serviços OSM indisponíveis");
 
       const points = convertElements(json.elements);
       if (points.length === 0) throw new Error("Nenhuma parada adicional encontrada");
@@ -199,10 +228,8 @@
     } catch (error) {
       console.warn("BusPass: não foi possível consultar paradas adicionais no OSM.", error.message);
       if (!cache?.points?.length) {
-        status("Paradas extras indisponíveis no momento; pontos cadastrados continuam no mapa.");
+        status("Não foi possível carregar paradas extras. Os 75 pontos do projeto continuam disponíveis.");
       }
-    } finally {
-      clearTimeout(timeout);
     }
   }
 
