@@ -957,8 +957,11 @@ function vincularParadasOsmAoMapa() {
         ponto.name = "Ponto próximo ao " + ponto.bairroEstimado;
       } else if (distanciaRef <= 650 && ref?.name) {
         ponto.name = "Ponto próximo a " + ref.name.trim();
+      } else if (ref?.name && distanciaRef <= 1500) {
+        ponto.name = "Parada a cerca de " + Math.round(distanciaRef) +
+          " m de " + ref.name.trim();
       } else {
-        ponto.name = "Ponto de ônibus";
+        ponto.name = "Parada sem nome cadastrado";
       }
     }
     if (enderecoSemDados) {
@@ -966,7 +969,9 @@ function vincularParadasOsmAoMapa() {
         ? "Região próxima a " + ponto.bairroEstimado
         : (distanciaRef <= 650 && ref?.name
             ? "Próximo a " + ref.name.trim()
-            : "Bairro não identificado");
+            : (distanciaRef <= 1500 && ref?.name
+                ? "Bairro não confirmado · referência: " + ref.name.trim()
+                : "São Carlos · bairro não identificado"));
     } else if (ponto.bairroEstimado) {
       ponto.address += " · Região próxima a " + ponto.bairroEstimado;
     }
