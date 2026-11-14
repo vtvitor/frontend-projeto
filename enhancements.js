@@ -5,6 +5,17 @@
   const { state, MapManager, RouteGeometry, RoutePlanner, FilterManager, getPointById, pointLabel, escapeHtml } = internals;
   const allRoutes = () => BUS_DATA.routes || {};
 
+  // Aproximação a pé (em linha reta) somente quando não há linha próxima vinculada.
+  function resolverEmbarque(id) {
+    const p = getPointById(id);
+    if (!p) return null;
+    if (p.type === "osm_stop" && !(p.lines || []).length) {
+      if (!p.pontoReferenciaId || p.distanciaReferenciaMetros > 1500) return null;
+      return { id: p.pontoReferenciaId, acessoMetros: p.distanciaReferenciaMetros };
+    }
+    return { id, acessoMetros: 0 };
+  }
+
   const planner = {
     between(line, from, to) {
       const stops = allRoutes()[line] || [];
@@ -22,29 +33,39 @@
       return best;
     },
     direct(from, to) {
+      const a = resolverEmbarque(from), b = resolverEmbarque(to);
+      if (!a || !b) return [];
       return Object.keys(allRoutes()).flatMap(line => {
-        const segment = this.between(line, from, to);
-        return segment ? [{ kind: "direct", line, ...segment, totalStops: segment.stops.length - 1 }] : [];
+        const segment = this.between(line, a.id, b.id);
+        return segment ? [{
+          kind: "direct", line, ...segment, totalStops: segment.stops.length - 1,
+          requestedFrom: from, requestedTo: to,
+          walkFromMeters: a.acessoMetros, walkToMeters: b.acessoMetros
+        }] : [];
       }).sort((a, b) => a.totalStops - b.totalStops);
     },
     transfer(from, to) {
+      const inicio = resolverEmbarque(from), fim = resolverEmbarque(to);
+      if (!inicio || !fim) return [];
       const lines = Object.keys(allRoutes());
       const best = new Map();
       lines.forEach(lineA => {
         const a = allRoutes()[lineA];
-        if (!a.includes(from)) return;
+        if (!a.includes(inicio.id)) return;
         lines.forEach(lineB => {
           const b = allRoutes()[lineB];
-          if (lineA === lineB || !b.includes(to)) return;
+          if (lineA === lineB || !b.includes(fim.id)) return;
           [...new Set(a)].filter(id => b.includes(id)).forEach(transferAt => {
-            if (transferAt === from || transferAt === to) return;
-            const segmentA = this.between(lineA, from, transferAt);
-            const segmentB = this.between(lineB, transferAt, to);
+            if (transferAt === inicio.id || transferAt === fim.id) return;
+            const segmentA = this.between(lineA, inicio.id, transferAt);
+            const segmentB = this.between(lineB, transferAt, fim.id);
             if (!segmentA || !segmentB) return;
             const option = {
               kind: "transfer", lineA, lineB, transferAt,
               segmentA: segmentA.stops, segmentB: segmentB.stops,
-              totalStops: segmentA.stops.length + segmentB.stops.length - 2
+              totalStops: segmentA.stops.length + segmentB.stops.length - 2,
+              requestedFrom: from, requestedTo: to,
+              walkFromMeters: inicio.acessoMetros, walkToMeters: fim.acessoMetros
             };
             const key = lineA + "/" + lineB;
             if (!best.has(key) || option.totalStops < best.get(key).totalStops) best.set(key, option);
@@ -135,6 +156,21 @@
           console.warn("Trajeto aproximado: não foi possível obter o traçado pelas ruas.", error);
         }));
       });
+      // Acesso a pé aproximado indicado por linha tracejada (não é caminho viário).
+      const source = getPointById(route.requestedFrom);
+      const boarding = getPointById(parts[0].stops[0]);
+      const alighting = getPointById(parts.at(-1).stops.at(-1));
+      const destination = getPointById(route.requestedTo);
+      for (const [a, b, metros] of [
+        [source, boarding, route.walkFromMeters],
+        [alighting, destination, route.walkToMeters]
+      ]) {
+        if (a && b && metros > 0) {
+          this.plannerLayers.push(L.polyline([[a.lat, a.lng], [b.lat, b.lng]], {
+            color: "#687987", weight: 4, opacity: 0.85, dashArray: "6 6"
+          }).addTo(state.map));
+        }
+      }
       if (this.plannerLayers.length) {
         const bounds = L.featureGroup(this.plannerLayers).getBounds();
         if (bounds.isValid()) state.map.fitBounds(bounds, { padding: [48, 48], maxZoom: 15 });
@@ -214,7 +250,7 @@
     const choices = [...direct, ...transfers];
     this.choices = choices;
     if (!choices.length) {
-      container.innerHTML = '<div class="route-no-result">Nenhum trajeto encontrado com os pontos cadastrados. Escolha outros locais.</div>';
+      container.innerHTML = '<div class="route-no-result">Não foi possível associar esses pontos às linhas demonstrativas. Para viajar, confira os horários e percursos no <a href="https://soutransportes.com.br/sao-carlos/linhas-e-horarios/" target="_blank" rel="noopener noreferrer">site oficial SOU São Carlos</a>.</div>';
       MapUX.clearPlanner();
       return;
     }
@@ -224,19 +260,25 @@
       const name = transfer
         ? `${BUS_DATA.lines[route.lineA]?.name || ""} / ${BUS_DATA.lines[route.lineB]?.name || ""}`
         : BUS_DATA.lines[route.line]?.name || "";
-      const start = transfer ? route.segmentA[0] : route.stops[0];
-      const end = transfer ? route.segmentB.at(-1) : route.stops.at(-1);
+      const start = route.requestedFrom || (transfer ? route.segmentA[0] : route.stops[0]);
+      const end = route.requestedTo || (transfer ? route.segmentB.at(-1) : route.stops.at(-1));
       const via = transfer ? `Troca em ${pointLabel(getPointById(route.transferAt))}` : `Sentido: ${route.direction}`;
+      const caminhada = (route.walkFromMeters || route.walkToMeters)
+        ? '<span class="route-card-walking">Acesso a pé aproximado (distância em linha reta): ' +
+          (route.walkFromMeters ? 'origem ~' + route.walkFromMeters + ' m ' : '') +
+          (route.walkToMeters ? 'destino ~' + route.walkToMeters + ' m' : '') + '.</span>'
+        : "";
       return `<button type="button" class="route-card${transfer ? " transfer" : ""}"
         data-choice="${i}" aria-pressed="false" aria-label="Ver ${escapeHtml(label)} no mapa">
         <span class="route-card-title"><span class="badge">${escapeHtml(label)}</span>${escapeHtml(name)}</span>
         <span class="route-card-line">${route.totalStops} trecho(s) · ${escapeHtml(via)}</span>
         <span class="route-card-stops">${escapeHtml(pointLabel(getPointById(start)))} → ${escapeHtml(pointLabel(getPointById(end)))}</span>
+        ${caminhada}
         <span class="route-card-hint">Clique para mostrar este trajeto no mapa</span>
       </button>`;
     };
     container.innerHTML = `
-      <p class="route-disclaimer">Rotas aproximadas com base nos pontos cadastrados, sujeitas a validação. Não representam horários ou itinerários oficiais.</p>
+      <p class="route-disclaimer">Simulação baseada no projeto. Linhas nas paradas OSM foram relacionadas por proximidade; itinerários e horários não são oficiais. Confirme antes de viajar na <a href="https://soutransportes.com.br/sao-carlos/linhas-e-horarios/" target="_blank" rel="noopener noreferrer">SOU São Carlos</a>.</p>
       ${direct.length ? "<h3 class='route-group-title'>🚌 Diretas</h3>" : ""}
       ${direct.map((r, i) => card(r, i)).join("")}
       ${transfers.length ? "<h3 class='route-group-title'>🔁 Com integração</h3>" : ""}
